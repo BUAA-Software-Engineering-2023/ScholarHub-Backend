@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6z^so@!g_!p*64=-*f#6tpn-2$443+io*&e@csq#+@#0!-t9i!'
+SECRET_KEY = os.environ.get('DJANGO_SECRET', 'django-insecure-6z^so@!g_!p*64=-*f#6tpn-2$443+io*&e@csq#+@#0!-t9i!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', True) in ['True', 'true', True, 1, '1']
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders'
+    'corsheaders',
+    'user'
 ]
 
 MIDDLEWARE = [
@@ -92,16 +93,25 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # 密码不能与用户名、邮箱太相似
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': [
+                'username', 'email'
+            ]
+        }
     },
     {
+        # 密码长度应大于8
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
+        # 密码不应为常见密码
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        # 密码至少包含大小写字母、数字、特殊字符中的2种
+        'NAME': 'utils.password_validation.PasswordCharacterValidator',
     },
 ]
 
@@ -146,3 +156,12 @@ CACHES = {
                     f":{os.environ.get('REDIS_PORT', '6379')}"
     }
 }
+
+# 邮件配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '8Z7IWIIRHwJwUu59')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_USE_SSL = True
