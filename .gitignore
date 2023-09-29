@@ -1,0 +1,17 @@
+*.log
+
+.DS_Store
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+__pycache__/
+*/migrations/*
+!*/migrations/__init__.py
+db.sqlite3
