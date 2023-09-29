@@ -2,7 +2,7 @@ import json
 import random
 
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.http.response import JsonResponse
@@ -11,6 +11,7 @@ from django.core.mail import EmailMessage
 
 from user.models import User
 from utils.cache import get_verification_code, set_verification_code
+from utils.token import make_token
 
 
 def send_verification_code_view(request):
@@ -54,7 +55,6 @@ def send_verification_code_view(request):
         'success': True,
         'code': code
     })
-
 
 
 def register_view(request):
@@ -130,3 +130,40 @@ def register_view(request):
         'success': True
     })
 
+
+def login_view(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '不允许的请求方法'
+        })
+
+    data = json.loads(request.body)
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return JsonResponse({
+            'success': False,
+            'message': '用户名或密码不能为空'
+        })
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '该用户不存在'
+        })
+
+    if not check_password(password, user.password):
+        return JsonResponse({
+            'success': False,
+            'message': '用户名或密码错误'
+        })
+
+    token = make_token({'id': user.id})
+    return JsonResponse({
+        'success': True,
+        'token': token
+    })
