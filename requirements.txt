@@ -2,3 +2,4 @@ Django
 mysqlclient
 pyjwt
 pyalex
+django-cors-headers
