@@ -26,7 +26,8 @@ def search_works(search: str, filter: dict = None, sort: dict = None, page: int 
         set_openalex_entities_cache(result, 'work', search, filter, sort, page, size)
     return result
 
-def get_single_work(id:str):
+
+def get_single_work(id: str):
     try:
         result = Works()[id]
     except:
@@ -37,6 +38,7 @@ def get_single_work(id:str):
     else:
         result['abstract'] = ''
     return result
+
 
 def search_authors(search: str, filter: dict = None, sort: dict = None, page: int = 1, size: int = 25):
     if filter is None:
@@ -54,4 +56,12 @@ def search_authors(search: str, filter: dict = None, sort: dict = None, page: in
             'result': result
         }
         set_openalex_entities_cache(result, 'author', search, filter, sort, page, size)
+    return result
+
+
+def get_single_author(id: str):
+    try:
+        result = Authors()[id]
+    except:
+        return None
     return result
