@@ -147,7 +147,7 @@ def login_view(request):
             'message': '用户名或密码错误'
         })
 
-    token = make_token({'id': user.id})
+    token = make_token({'id': user.id, 'username': user.username})
     return JsonResponse({
         'success': True,
         'data': {
