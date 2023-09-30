@@ -10,7 +10,7 @@ from django.template import loader
 from django.core.mail import EmailMessage
 
 from user.models import User
-from utils.cache import get_verification_code, set_verification_code
+from utils.cache import get_verification_code_cache, set_verification_code_cache
 from utils.token import make_token
 
 
@@ -35,7 +35,7 @@ def send_verification_code_view(request):
     code = str(random.randrange(100000, 999999))
 
     # 写入缓存
-    set_verification_code(email, code)
+    set_verification_code_cache(email, code)
 
     # TODO 使用celery处理发送邮件
     t = loader.get_template('verification_code.html')
@@ -92,7 +92,7 @@ def register_view(request):
             'message': '两次密码不一致'
         })
 
-    if code != get_verification_code(email):
+    if code != get_verification_code_cache(email):
         return JsonResponse({
             'success': False,
             'message': '验证码错误'
@@ -153,7 +153,7 @@ def login_view(request):
     except User.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': '该用户不存在'
+            'message': '用户名或密码错误'
         })
 
     if not check_password(password, user.password):
@@ -165,5 +165,7 @@ def login_view(request):
     token = make_token({'id': user.id})
     return JsonResponse({
         'success': True,
-        'token': token
+        'data': {
+            'token': token
+        }
     })
