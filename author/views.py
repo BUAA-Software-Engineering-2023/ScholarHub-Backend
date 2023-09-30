@@ -1,10 +1,12 @@
 import json
 
-from django.http.response import JsonResponse
-from utils.openalex import search_works
+from django.http import JsonResponse
+
+from utils.openalex import search_authors
 
 
-def search_work_view(request):
+# Create your views here.
+def search_author_view(request):
     if request.method != 'POST':
         return JsonResponse({
             'success': False,
@@ -16,7 +18,7 @@ def search_work_view(request):
     sort = data.get('sort')
     page = int(data.get('page'))
     size = int(data.get('size'))
-    result = search_works(search, filter, sort, page, size)
+    result = search_authors(search, filter, sort, page, size)
     return JsonResponse({
         'success': True,
         'data': result
