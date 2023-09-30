@@ -11,9 +11,11 @@ from django.core.mail import EmailMessage
 
 from user.models import User
 from utils.cache import get_verification_code_cache, set_verification_code_cache
+from utils.decorator import request_methods
 from utils.token import make_token
 
 
+@request_methods(['POST'])
 def send_verification_code_view(request):
     if request.method != 'POST':
         return JsonResponse({
@@ -56,7 +58,7 @@ def send_verification_code_view(request):
         'code': code
     })
 
-
+@request_methods(['POST'])
 def register_view(request):
     if request.method != 'POST':
         return JsonResponse({
@@ -131,6 +133,7 @@ def register_view(request):
     })
 
 
+@request_methods(['POST'])
 def login_view(request):
     if request.method != 'POST':
         return JsonResponse({
