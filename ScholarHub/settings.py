@@ -28,6 +28,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', True) in ['True', 'true', True, 1, '1']
 
 ALLOWED_HOSTS = ['*']
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Application definition
 
@@ -39,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'user',
-    'work'
+    'work',
+    'author'
 ]
 
 MIDDLEWARE = [
