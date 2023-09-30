@@ -21,11 +21,6 @@ def search_works_view(request):
 
 @request_methods(['POST'])
 def work_detail_view(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '不允许的方法'
-        })
     data = json.loads(request.body)
     id = data.get('id')
     if not id:
