@@ -1,9 +1,11 @@
 from django.core.cache import cache
 import json
 
+
 def set_verification_code_cache(email, code):
     key = f'verification_code_{email}'
-    cache.set(key, code, 30*60)
+    cache.set(key, code, 30 * 60)
+
 
 def get_verification_code_cache(email):
     key = f'verification_code_{email}'
@@ -11,7 +13,11 @@ def get_verification_code_cache(email):
     cache.delete(key)
     return code
 
-def get_openalex_entities_key(type:str, search:str, filter:dict=None, sort:dict=None):
+
+def get_openalex_entities_key(
+        type: str, search: str, filter: dict = None,
+        sort: dict = None, page: int = 0, size: int = 25
+):
     if filter is None:
         filter = {}
     if sort is None:
@@ -26,13 +32,17 @@ def get_openalex_entities_key(type:str, search:str, filter:dict=None, sort:dict=
         'type': type,
         'search': search,
         'filter': filter,
-        'sort': sort
+        'sort': sort,
+        'page': page,
+        'size': size
     })
 
-def get_openalex_entities_cache(type:str, search:str, filter:dict=None, sort:dict=None):
-    key = get_openalex_entities_key(type, search, filter, sort)
+
+def get_openalex_entities_cache(*args, **kwargs):
+    key = get_openalex_entities_key(*args, **kwargs)
     return cache.get(key)
 
-def set_openalex_entities_cache(result:dict, type:str, search:str, filter:dict=None, sort:dict=None):
-    key = get_openalex_entities_key(type, search, filter, sort)
+
+def set_openalex_entities_cache(result: dict, *args, **kwargs):
+    key = get_openalex_entities_key(*args, **kwargs)
     return cache.set(key, result)
