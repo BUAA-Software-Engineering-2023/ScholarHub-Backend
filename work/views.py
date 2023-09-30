@@ -1,14 +1,12 @@
 import json
 
 from django.http.response import JsonResponse
+
+from utils.decorator import request_methods
 from utils.openalex import search_works, get_single_work
 
+@request_methods(['POST'])
 def search_works_view(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '不允许的方法'
-        })
     data = json.loads(request.body)
     search = data.get('search', '')
     filter = data.get('filter')
@@ -21,6 +19,7 @@ def search_works_view(request):
         'data': result
     })
 
+@request_methods(['POST'])
 def work_detail_view(request):
     if request.method != 'POST':
         return JsonResponse({
