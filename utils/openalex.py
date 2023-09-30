@@ -26,6 +26,17 @@ def search_works(search: str, filter: dict = None, sort: dict = None, page: int 
         set_openalex_entities_cache(result, 'work', search, filter, sort, page, size)
     return result
 
+def get_single_work(id:str):
+    try:
+        result = Works()[id]
+    except:
+        return None
+    if result.get('abstract_inverted_index') is not None:
+        result['abstract'] = result['abstract']
+        del result['abstract_inverted_index']
+    else:
+        result['abstract'] = ''
+    return result
 
 def search_authors(search: str, filter: dict = None, sort: dict = None, page: int = 1, size: int = 25):
     if filter is None:
