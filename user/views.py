@@ -17,12 +17,6 @@ from utils.token import make_token
 
 @request_methods(['POST'])
 def send_verification_code_view(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '不允许的请求方法'
-        })
-
     data = json.loads(request.body)
     email = data.get('email')
     try:
@@ -60,12 +54,6 @@ def send_verification_code_view(request):
 
 @request_methods(['POST'])
 def register_view(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '不允许的请求方法'
-        })
-
     data = json.loads(request.body)
     username = data.get('username')
     email = data.get('email')
@@ -135,12 +123,6 @@ def register_view(request):
 
 @request_methods(['POST'])
 def login_view(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '不允许的请求方法'
-        })
-
     data = json.loads(request.body)
     username = data.get('username')
     password = data.get('password')
