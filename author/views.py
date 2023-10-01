@@ -40,10 +40,19 @@ def author_detail_view(request):
             'success': False,
             'message': '不存在此作者'
         })
-    return JsonResponse({
-        'success': True,
-        'data': result
-    })
+    author = Author.objects.filter(id=id).first()
+    if author:
+        result['profile'] = author.profile
+        result['avatar'] = author.avatar
+        return JsonResponse({
+            'success': True,
+            'data': result
+        })
+    else:
+        return JsonResponse({
+            'success': True,
+            'data': result
+        })
 
 
 @request_methods(['POST'])
@@ -122,7 +131,7 @@ def process_application_view(request):
             'success': False,
             'message': '此申请已处理'
         })
-    if data.get('pass') == 'true':
+    if data.get('pass'):
         application.status = ApplicationStatus.ACCEPTED.value
         application.save()
         result = get_single_author(application.author_id)
