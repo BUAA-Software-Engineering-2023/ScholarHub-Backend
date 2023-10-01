@@ -46,3 +46,18 @@ def get_openalex_entities_cache(*args, **kwargs):
 def set_openalex_entities_cache(result: dict, *args, **kwargs):
     key = get_openalex_entities_key(*args, **kwargs)
     return cache.set(key, result)
+
+
+def get_comment_cache(work_id):
+    key = f'comment_{work_id}'
+    return cache.get(key)
+
+
+def set_comment_cache(work_id, result):
+    key = f'comment_{work_id}'
+    return cache.set(key, result)
+
+
+def clear_comment_cache(work_id):
+    key = f'comment_{work_id}'
+    return cache.delete(key)
