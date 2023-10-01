@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'work',
     'author',
     'entity',
-    'comment'
+    'comment',
+    'message'
 ]
 
 MIDDLEWARE = [
