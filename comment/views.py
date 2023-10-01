@@ -1,9 +1,9 @@
 import json
 
-from django.http import JsonResponse, HttpResponse
-from django.core import serializers
+from django.http import JsonResponse
 
 from comment.models import Comment
+from message.models import Message
 from utils.cache import get_comment_cache, set_comment_cache, clear_comment_cache
 from utils.decorator import request_methods
 from utils.openalex import get_single_entity
@@ -30,9 +30,20 @@ def list_comment_view(request):
                 'message': '学术成果不存在'
             })
         comments = Comment.objects.filter(work=work_id)
-        comments = serializers.serialize('json', comments)
+        comments = [{
+            'comment_id': comment.id,
+            'work_id': comment.work,
+            'sender_id': comment.sender.id,
+            'sender_username': comment.sender.username,
+            'content': comment.content,
+            'reply_id': comment.reply.id if comment.reply else None,
+            'reply_username': comment.reply.sender.username if comment.reply else None,
+        } for comment in comments]
         set_comment_cache(work_id, comments)
-    return HttpResponse(comments, content_type='application/json')
+    return JsonResponse({
+        'success': True,
+        'data': comments
+    })
 
 
 @request_methods(['POST'])
@@ -62,6 +73,8 @@ def create_comment_view(request):
             })
         comment = Comment(work=work_id, sender=request.user, content=content, reply=reply)
         comment.save()
+        message = Message(receiver=reply.sender, content=f'您的评论有了来自{request.user.username}的新回复')
+        message.save()
         return JsonResponse({
             'success': True,
             'message': '回复评论成功',
