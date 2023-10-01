@@ -73,7 +73,7 @@ def source_detail_view(request):
     })
 
 @request_methods(['POST'])
-def source_institution_view(request):
+def institution_detail_view(request):
     data = json.loads(request.body)
     id = data.get('id')
     if not id:
@@ -93,7 +93,7 @@ def source_institution_view(request):
     })
 
 @request_methods(['POST'])
-def source_concept_view(request):
+def concept_detail_view(request):
     data = json.loads(request.body)
     id = data.get('id')
     if not id:
@@ -113,7 +113,7 @@ def source_concept_view(request):
     })
 
 @request_methods(['POST'])
-def source_publisher_view(request):
+def publisher_detail_view(request):
     data = json.loads(request.body)
     id = data.get('id')
     if not id:
@@ -133,7 +133,7 @@ def source_publisher_view(request):
     })
 
 @request_methods(['POST'])
-def source_funder_view(request):
+def funder_detail_view(request):
     data = json.loads(request.body)
     id = data.get('id')
     if not id:
