@@ -3,3 +3,4 @@ mysqlclient
 pyjwt
 pyalex
 django-cors-headers
+celery

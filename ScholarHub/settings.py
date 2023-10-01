@@ -161,7 +161,7 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
-                    f":{os.environ.get('REDIS_PORT', '6379')}"
+                    f":{os.environ.get('REDIS_PORT', '6379')}/0"
     }
 }
 
@@ -170,6 +170,17 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
 EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '8Z7IWIIRHwJwUu59')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_USE_SSL = True
+
+# celery设置
+CELERY_BROKER_URL = (f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
+                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
+                     f":{os.environ.get('REDIS_PORT', '6379')}/1")
+CELERY_RESULT_BACKEND = (f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
+                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
+                     f":{os.environ.get('REDIS_PORT', '6379')}/2")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = "Asia/Shanghai"
