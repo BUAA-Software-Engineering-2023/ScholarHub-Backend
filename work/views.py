@@ -3,17 +3,13 @@ import json
 from django.http.response import JsonResponse
 
 from utils.decorator import request_methods
-from utils.openalex import search_works, get_single_work
+from utils.openalex import search_entities_by_body, get_single_entity
+
 
 @request_methods(['POST'])
 def search_works_view(request):
     data = json.loads(request.body)
-    search = data.get('search', '')
-    filter = data.get('filter')
-    sort = data.get('sort')
-    page = int(data.get('page', 1))
-    size = int(data.get('size', 25))
-    result = search_works(search, filter, sort, page, size)
+    result = search_entities_by_body('work', data)
     return JsonResponse({
         'success': True,
         'data': result
@@ -28,7 +24,7 @@ def work_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_work(id)
+    result = get_single_entity('work', id)
     if not result:
         return JsonResponse({
             'success': False,
