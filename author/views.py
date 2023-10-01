@@ -23,22 +23,23 @@ def search_author_view(request):
 @request_methods(['POST'])
 def author_detail_view(request):
     data = json.loads(request.body)
-    id = data.get('id')
-    if not id:
+    author_id = data.get('author_id')
+    if not author_id:
         return JsonResponse({
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('author', id)
+    result = get_single_entity('author', author_id)
     if not result:
         return JsonResponse({
             'success': False,
             'message': '不存在此作者'
         })
-    author = Author.objects.filter(id=id).first()
+    author = Author.objects.filter(id=author_id).first()
     if author:
         result['profile'] = author.profile
         result['avatar'] = author.avatar
+        result['display_name'] = author.name
         return JsonResponse({
             'success': True,
             'data': result
@@ -80,7 +81,7 @@ def apply_view(request):
     return JsonResponse({
         'success': True,
         'data': {
-            'id': application.id,
+            'application_id': application.id,
             'status': ApplicationStatus.PENDING.info(),
             'author_id': author_id
         }
@@ -97,7 +98,7 @@ def list_application_view(request):
     result = []
     for application in applications:
         result.append({
-            'id': application.id,
+            'application_id': application.id,
             'status': ApplicationStatus(application.status).info(),
         })
     return JsonResponse({
@@ -115,8 +116,9 @@ def process_application_view(request):
             'message': '您不是管理员'
         }, status=403)
     data = json.loads(request.body)
-    application = Application.objects.get(id=data.get('id'))
-    if not application:
+    try:
+        application = Application.objects.get(id=data.get('application_id'))
+    except Application.DoesNotExist:
         return JsonResponse({
             'success': False,
             'message': '不存在此申请'
@@ -129,12 +131,12 @@ def process_application_view(request):
     if data.get('pass'):
         application.status = ApplicationStatus.ACCEPTED.value
         application.save()
-        result = get_single_author(application.author_id)
+        result = get_single_entity(application.author_id)
         author = Author.objects.create(id=application.author_id, user=application.user, name=result.get('display_name'))
         return JsonResponse({
             'success': True,
             'data': {
-                'id': application.id,
+                'application_id': application.id,
                 'status': ApplicationStatus.ACCEPTED.info(),
                 'author_id': author.id,
                 'author_name': author.name
@@ -146,7 +148,7 @@ def process_application_view(request):
         return JsonResponse({
             'success': True,
             'data': {
-                'id': application.id,
+                'application_id': application.id,
                 'status': ApplicationStatus.REJECTED.info(),
             }
         })
@@ -156,8 +158,9 @@ def process_application_view(request):
 @auth_check
 def edit_author_view(request):
     data = json.loads(request.body)
-    author = Author.objects.get(id=data.get('id'))
-    if not author:
+    try:
+        author = Author.objects.get(id=data.get('author_id'))
+    except Author.DoesNotExist:
         return JsonResponse({
             'success': False,
             'message': '不存在此作者'
@@ -174,7 +177,7 @@ def edit_author_view(request):
     return JsonResponse({
         'success': True,
         'data': {
-            'id': author.id,
+            'author_id': author.id,
             'name': author.name,
             'profile': author.profile,
             'avatar': author.avatar
