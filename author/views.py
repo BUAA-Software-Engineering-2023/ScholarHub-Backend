@@ -6,19 +6,14 @@ from django.http import JsonResponse
 
 from author.models import Author, Application, ApplicationStatus
 from utils.decorator import request_methods
-from utils.openalex import search_authors, get_single_author
+from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
 
 
 @request_methods(['POST'])
 def search_author_view(request):
     data = json.loads(request.body)
-    search = data.get('search', '')
-    filter = data.get('filter')
-    sort = data.get('sort')
-    page = int(data.get('page'))
-    size = int(data.get('size'))
-    result = search_authors(search, filter, sort, page, size)
+    result = search_entities_by_body('author', data)
     return JsonResponse({
         'success': True,
         'data': result
@@ -34,7 +29,7 @@ def author_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_author(id)
+    result = get_single_entity('author', id)
     if not result:
         return JsonResponse({
             'success': False,
