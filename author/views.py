@@ -23,7 +23,7 @@ def search_author_view(request):
 @request_methods(['POST'])
 def author_detail_view(request):
     data = json.loads(request.body)
-    author_id = data.get('author_id')
+    author_id = data.get('id')
     if not author_id:
         return JsonResponse({
             'success': False,
@@ -40,15 +40,10 @@ def author_detail_view(request):
         result['profile'] = author.profile
         result['avatar'] = author.avatar
         result['display_name'] = author.name
-        return JsonResponse({
-            'success': True,
-            'data': result
-        })
-    else:
-        return JsonResponse({
-            'success': True,
-            'data': result
-        })
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })
 
 
 @request_methods(['POST'])
