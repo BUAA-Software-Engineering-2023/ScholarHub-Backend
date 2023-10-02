@@ -16,6 +16,7 @@ from utils.token import auth_check
 def list_comment_view(request):
     data = json.loads(request.body)
     work_id = data.get('work_id')
+    reverse = data.get('reverse')
     if not work_id:
         return JsonResponse({
             'success': False,
@@ -23,22 +24,35 @@ def list_comment_view(request):
         })
     comments = get_comment_cache(work_id)
     if not comments:
-        result = get_single_entity('work', work_id)
-        if not result:
-            return JsonResponse({
-                'success': False,
-                'message': '学术成果不存在'
-            })
-        comments = Comment.objects.filter(work=work_id)
-        comments = [{
-            'comment_id': comment.id,
-            'work_id': comment.work,
-            'sender_id': comment.sender.id,
-            'sender_username': comment.sender.username,
-            'content': comment.content,
-            'reply_id': comment.reply.id if comment.reply else None,
-            'reply_username': comment.reply.sender.username if comment.reply else None,
-        } for comment in comments]
+        if reverse or reverse is None:
+            comments = Comment.objects.filter(work=work_id).order_by('-created_at')
+        else:
+            comments = Comment.objects.filter(work=work_id).order_by('created_at')
+        temp = {}
+        for comment in comments:
+            if not comment.reply:
+                continue
+            if comment.reply.id not in temp:
+                temp[comment.reply.id] = []
+            temp[comment.reply.id].append(comment)
+
+        def build_comment_tree(comment):
+            return {
+                'comment_id': comment.id,
+                'work_id': comment.work,
+                'sender_id': comment.sender.id,
+                'sender_username': comment.sender.username,
+                'content': comment.content,
+                'replies': [build_comment_tree(reply) for reply in temp.get(comment.id, [])],
+                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+
+        temp2 = []
+        for comment in comments:
+            if not comment.reply:
+                temp2.append(build_comment_tree(comment))
+        comments = temp2
         set_comment_cache(work_id, comments)
     return JsonResponse({
         'success': True,
@@ -73,20 +87,42 @@ def create_comment_view(request):
             })
         comment = Comment(work=work_id, sender=request.user, content=content, reply=reply)
         comment.save()
+        clear_comment_cache(comment.work)
         message = Message(receiver=reply.sender, content=f'您的评论有了来自{request.user.username}的新回复')
         message.save()
         return JsonResponse({
             'success': True,
             'message': '回复评论成功',
-            'comment_id': comment.id
+            'data': {
+                'comment_id': comment.id,
+                'work_id': comment.work,
+                'sender_id': comment.sender.id,
+                'sender_username': comment.sender.username,
+                'content': comment.content,
+                'reply_id': comment.reply.id,
+                'reply_username': comment.reply.sender.username,
+                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
         })
     else:
         comment = Comment(work=work_id, sender=request.user, content=content)
         comment.save()
+        clear_comment_cache(comment.work)
         return JsonResponse({
             'success': True,
             'message': '评论成功',
-            'comment_id': comment.id
+            'data': {
+                'comment_id': comment.id,
+                'work_id': comment.work,
+                'sender_id': comment.sender.id,
+                'sender_username': comment.sender.username,
+                'content': comment.content,
+                'reply_id': None,
+                'reply_username': None,
+                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
         })
 
 
@@ -163,5 +199,16 @@ def modify_comment_view(request):
     clear_comment_cache(comment.work)
     return JsonResponse({
         'success': True,
-        'message': '修改评论成功'
+        'message': '修改评论成功',
+        'data': {
+            'comment_id': comment.id,
+            'work_id': comment.work,
+            'sender_id': comment.sender.id,
+            'sender_username': comment.sender.username,
+            'content': comment.content,
+            'reply_id': comment.reply.id if comment.reply else None,
+            'reply_username': comment.reply.sender.username if comment.reply else None,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+        }
     })
