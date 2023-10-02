@@ -23,7 +23,7 @@ def search_author_view(request):
 @request_methods(['POST'])
 def author_detail_view(request):
     data = json.loads(request.body)
-    author_id = data.get('id')
+    author_id = data.get('author_id')
     if not author_id:
         return JsonResponse({
             'success': False,
