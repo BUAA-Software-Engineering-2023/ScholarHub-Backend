@@ -61,3 +61,33 @@ def set_comment_cache(work_id, result):
 def clear_comment_cache(work_id):
     key = f'comment_{work_id}'
     return cache.delete(key)
+
+
+def get_question_cache():
+    key = 'question'
+    return cache.get(key)
+
+
+def set_question_cache(result):
+    key = 'question'
+    return cache.set(key, result)
+
+
+def clear_question_cache():
+    key = 'question'
+    return cache.delete(key)
+
+
+def get_answer_cache(question_id):
+    key = f'answer_{question_id}'
+    return cache.get(key)
+
+
+def set_answer_cache(question_id, result):
+    key = f'answer_{question_id}'
+    return cache.set(key, result)
+
+
+def clear_answer_cache(question_id):
+    key = f'answer_{question_id}'
+    return cache.delete(key)
