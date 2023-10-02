@@ -52,6 +52,47 @@ def search_entities_by_body(type:str, data:dict):
     result = search_entities(type, search, filter, sort, page, size)
     return result
 
+def search_works_by_author_id(id:str):
+    try:
+        result, meta = Works().filter(author={"id": id}).get(return_meta=True)
+        for r in result:
+            if r.get('abstract_inverted_index') is not None:
+                r['abstract'] = r['abstract']
+                del r['abstract_inverted_index']
+            else:
+                r['abstract'] = ''
+    except:
+        return None
+    return result
+
+def calculate_collaborators(works: list, id: str):
+    """
+    根据指定作者的所有论文计算所有合作者信息
+    :param works: 作者的所有论文
+    :param id: 作者的id
+    :return: 作者的所有合作者
+    """
+    collaborators = {}
+    for work in works:
+        for author in work['authorships']:
+            author = author['author']
+            if author['id'] == id:
+                continue
+            if author['id'] not in collaborators.keys():
+                author['cooperation_times'] = 0
+                author['collaborative_works'] = []
+                collaborators[author['id']] = author
+            collaborators[author['id']]['cooperation_times'] += 1
+            collaborators[author['id']]['collaborative_works'].append({
+                'id': work['id'],
+                'display_name': work['display_name']
+            })
+    collaborators = sorted(collaborators.values(),
+                           key=lambda x: x['cooperation_times'],
+                           reverse=True)
+    return collaborators
+
+
 def get_single_entity(type:str, id: str):
     try:
         result = entities[type]()[id]
@@ -63,4 +104,7 @@ def get_single_entity(type:str, id: str):
             del result['abstract_inverted_index']
         else:
             result['abstract'] = ''
+    if type == 'author':
+        result['works'] = search_works_by_author_id(id)
+        result['collaborators'] = calculate_collaborators(result['works'], id)
     return result
