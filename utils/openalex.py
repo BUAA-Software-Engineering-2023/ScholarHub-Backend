@@ -1,4 +1,3 @@
-import pyalex.api
 from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, Funders
 from pyalex.api import QueryError
 from requests import HTTPError
@@ -162,10 +161,10 @@ def get_single_entity(type: str, id: str):
 
             result['referenced_works'] = Works(
                 {'select': ['id', 'display_name', 'publication_year']}
-            )[result['referenced_works']]
+            )[result['referenced_works'][0:20]]
             result['related_works'] = Works(
                 {'select': ['id', 'display_name', 'publication_year']}
-            )[result['related_works']]
+            )[result['related_works'][0:20]]
 
         if type == 'author':
             result['works'] = search_works_by_author_id(id)
