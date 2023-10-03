@@ -1,6 +1,4 @@
-import hashlib
 import json
-import os
 
 from django.http import JsonResponse
 
@@ -8,6 +6,7 @@ from author.models import Author, Application, ApplicationStatus
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
+from utils.upload import upload_file
 
 
 @request_methods(['POST'])
@@ -131,8 +130,8 @@ def process_application_view(request):
     if data.get('pass'):
         application.status = ApplicationStatus.ACCEPTED.value
         application.save()
-        result = get_single_entity(application.author_id)
-        author = Author.objects.create(id=application.author_id, user=application.user, name=result.get('display_name'))
+        result = get_single_entity('author', application.author_id)
+        author = Author.objects.create(id=application.author_id, user=application.user, name=result[0]['display_name'])
         return JsonResponse({
             'success': True,
             'data': {
@@ -188,20 +187,13 @@ def edit_author_view(request):
 @request_methods(['POST'])
 @auth_check
 def upload_avatar_view(request):
-    avatar_file = request.FILES.get('avatar').open('r')
-    md5 = hashlib.md5(avatar_file.read()).hexdigest()
-    extra_name = avatar_file.name.split('.')[-1]
-    file_name = md5 + '.' + extra_name
-    if not os.path.exists(f'./media/{file_name}'):
-        avatar_file.seek(0)
-        with open(f'./media/{file_name}', 'wb') as f:
-            f.write(avatar_file.read())
+    file = upload_file(request, 'image')
+    if not file:
         return JsonResponse({
-            'success': True,
-            "data": {"url": request.build_absolute_uri(f'/media/{file_name}')}
+            'success': False,
+            'message': '图片格式错误'
         })
-    else:
-        return JsonResponse({
-            'success': True,
-            "data": {"url": request.build_absolute_uri(f'/media/{file_name}')}
-        })
+    return JsonResponse({
+        'success': True,
+        "data": file
+    })

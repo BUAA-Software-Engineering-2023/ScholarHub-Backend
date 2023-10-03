@@ -8,7 +8,9 @@ from message.models import Message
 from question.models import Question, Answer
 from utils.cache import get_question_cache, set_question_cache, clear_question_cache, get_answer_cache, \
     set_answer_cache, clear_answer_cache
+from utils.decorator import request_methods
 from utils.token import auth_check
+from utils.upload import upload_file
 
 
 # Create your views here.
@@ -27,7 +29,7 @@ class QuestionView(View):
                 'content': question.content,
                 'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }for question in questions]
+            } for question in questions]
             set_question_cache(questions)
         return JsonResponse({
             'success': True,
@@ -265,3 +267,18 @@ class AnswerView(View):
             'success': True,
             'message': '删除成功',
         })
+
+
+@request_methods(['POST'])
+@auth_check
+def upload_image_view(request):
+    file = upload_file(request, 'image')
+    if not file:
+        return JsonResponse({
+            'success': False,
+            'message': '图片格式错误'
+        })
+    return JsonResponse({
+        'success': True,
+        "data": file
+    })
