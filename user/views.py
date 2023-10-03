@@ -140,7 +140,13 @@ def login_view(request):
     return JsonResponse({
         'success': True,
         'data': {
-            'token': token
+            'token': token,
+            'id': user.id,
+            'username': user.username,
+            'nickname': user.nickname,
+            'email': user.email,
+            'is_admin': user.is_admin,
+            'is_author': user.author is not None
         }
     })
 
