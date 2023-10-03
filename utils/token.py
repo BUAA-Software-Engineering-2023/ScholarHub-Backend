@@ -54,11 +54,15 @@ def auth_check(func):
                     'success': False,
                     'message': '请先进行登录'
                 }, status=403)
-            if request.token_status == 403:
+            if request.token_status == 401:
                 return JsonResponse({
                     'success': False,
-                    'message': '未知错误'
+                    'message': '无效的token'
                 })
+            return JsonResponse({
+                'success': False,
+                'message': '未知错误'
+            })
         return func(request, *args, **kwargs)
 
     return wrap
