@@ -49,7 +49,7 @@ def work_detail_view(request):
 @auth_check
 def upload_work_view(request):
     id = request.POST.get('id')
-    author = request.user.author_set.first()
+    author = request.user.author
     if not id:
         return JsonResponse({
             'success': False,
@@ -61,7 +61,7 @@ def upload_work_view(request):
             'success': False,
             'message': '不存在的作品'
         })
-    if result.open_access.is_oa:
+    if result[0]['open_access']['is_oa']:
         return JsonResponse({
             'success': False,
             'message': '该作品已开放访问'
@@ -72,7 +72,8 @@ def upload_work_view(request):
             'success': False,
             'message': '上传文件格式错误'
         })
-    work = Work(id=id, title=result.title, name=result.display_name, url=file, status=WorkStatus.PENDING.value,
+    work = Work(id=id, title=result[0]['title'], name=result[0]['display_name'], url=file,
+                status=WorkStatus.PENDING.value,
                 author=author)
     work.save()
     return JsonResponse({
@@ -169,11 +170,11 @@ def download_work_view(request):
             'success': False,
             'message': '不存在的作品'
         })
-    if result.open_access.is_oa:
+    if result[0]['open_access']['is_oa']:
         return JsonResponse({
             'success': True,
             'data': {
-                'url': result.open_access.oa_url
+                'url': result[0]['open_access']['oa_url']
             }
         })
     else:

@@ -151,6 +151,23 @@ def login_view(request):
     })
 
 
+@request_methods(['GET'])
+@auth_check
+def get_userinfo_view(request):
+    user = request.user
+    return JsonResponse({
+        'success': True,
+        'data': {
+            'id': user.id,
+            'username': user.username,
+            'nickname': user.nickname,
+            'email': user.email,
+            'is_admin': user.is_admin,
+            'is_author': user.author is not None
+        }
+    })
+
+
 @request_methods(['PUT'])
 @auth_check
 def update_userinfo_view(request):

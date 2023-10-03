@@ -8,6 +8,7 @@ from utils.cache import get_comment_cache, set_comment_cache, clear_comment_cach
 from utils.decorator import request_methods
 from utils.openalex import get_single_entity
 from utils.token import auth_check
+from utils.upload import upload_file
 
 
 # Create your views here.
@@ -211,4 +212,19 @@ def modify_comment_view(request):
             'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
         }
+    })
+
+
+@request_methods(['POST'])
+@auth_check
+def upload_image_view(request):
+    file = upload_file(request, 'image')
+    if not file:
+        return JsonResponse({
+            'success': False,
+            'message': '图片格式错误'
+        })
+    return JsonResponse({
+        'success': True,
+        "data": file
     })
