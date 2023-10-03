@@ -10,7 +10,7 @@ from django.http.response import JsonResponse
 from user.models import User
 from utils.cache import get_verification_code_cache, set_verification_code_cache
 from utils.decorator import request_methods
-from utils.token import make_token
+from utils.token import make_token, auth_check
 from .tasks import celery_send_verification_code
 
 
@@ -142,4 +142,83 @@ def login_view(request):
         'data': {
             'token': token
         }
+    })
+
+
+@request_methods(['PUT'])
+@auth_check
+def update_userinfo_view(request):
+    user = request.user
+    data = json.loads(request.body)
+    nickname = data.get('nickname', user.nickname)
+    email = data.get('email', user.email)
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    code = data.get('code')
+    if email != user.email:
+        try:
+            email_validator = EmailValidator()
+            email_validator(email)
+        except ValidationError:
+            return JsonResponse({
+                'success': False,
+                'message': '邮箱格式错误'
+            })
+        try:
+            User.objects.get(email=email)
+            return JsonResponse({
+                'success': False,
+                'message': '邮箱已被注册'
+            })
+        except User.DoesNotExist:
+            pass
+        if code != get_verification_code_cache(email):
+            return JsonResponse({
+                'success': False,
+                'message': '验证码错误'
+            })
+    if old_password and new_password:
+        if not check_password(old_password, user.password):
+            return JsonResponse({
+                'success': False,
+                'message': '原密码错误'
+            })
+        user.password = make_password(new_password)
+    user.nickname = nickname
+    user.email = email
+    user.save()
+    return JsonResponse({
+        'success': True,
+        'message': '修改成功',
+        'data': {
+            'id': user.id,
+            'username': user.username,
+            'nickname': user.nickname,
+            'email': user.email
+        }
+    })
+
+
+@request_methods(['PUT'])
+@auth_check
+def retrieve_password_view(request):
+    user = request.user
+    data = json.loads(request.body)
+    code = data.get('code')
+    new_password = data.get('new_password')
+    if not code or not new_password:
+        return JsonResponse({
+            'success': False,
+            'message': '验证码或密码不能为空'
+        })
+    if code != get_verification_code_cache(user.email):
+        return JsonResponse({
+            'success': False,
+            'message': '验证码错误'
+        })
+    user.password = make_password(new_password)
+    user.save()
+    return JsonResponse({
+        'success': True,
+        'message': '修改成功'
     })
