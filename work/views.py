@@ -49,7 +49,13 @@ def work_detail_view(request):
 @auth_check
 def upload_work_view(request):
     id = request.POST.get('id')
-    author = request.user.author
+    try:
+        author = request.user.author
+    except AttributeError:
+        return JsonResponse({
+            'success': False,
+            'message': '您不是作者'
+        })
     if not id:
         return JsonResponse({
             'success': False,
@@ -72,6 +78,39 @@ def upload_work_view(request):
             'success': False,
             'message': '上传文件格式错误'
         })
+    if Work.objects.filter(id=id).exists():
+        work = Work.objects.get(id=id)
+        if work.status == WorkStatus.ACCEPTED.value:
+            return JsonResponse({
+                'success': False,
+                'message': '该作品已上传'
+            })
+        elif work.status == WorkStatus.REJECTED.value:
+            work.url = file
+            work.status = WorkStatus.PENDING.value
+            work.save()
+            return JsonResponse({
+                'success': True,
+                'message': '上传成功',
+                'data': {
+                    'id': work.id,
+                    'title': work.title,
+                    'name': work.name,
+                    'url': work.url,
+                    'status': WorkStatus.PENDING.info(),
+                    'author': work.author.id
+                }
+            })
+        elif work.status == WorkStatus.PENDING.value:
+            return JsonResponse({
+                'success': False,
+                'message': '该作品正在审核中'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': '该作品状态错误'
+            })
     work = Work(id=id, title=result[0]['title'], name=result[0]['display_name'], url=file,
                 status=WorkStatus.PENDING.value,
                 author=author)
@@ -112,7 +151,10 @@ def verify_work_view(request):
             'success': False,
             'message': '不存在的作品'
         })
-    work.status = WorkStatus.ACCEPTED.value
+    if data.get('pass'):
+        work.status = WorkStatus.ACCEPTED.value
+    else:
+        work.status = WorkStatus.REJECTED.value
     work.save()
     return JsonResponse({
         'success': True,
@@ -131,8 +173,9 @@ def verify_work_view(request):
 @request_methods(['GET'])
 @auth_check
 def list_work_view(request):
-    author = request.user.author
-    if not author:
+    try:
+        author = request.user.author
+    except AttributeError:
         return JsonResponse({
             'success': False,
             'message': '您不是作者'

@@ -130,8 +130,8 @@ def process_application_view(request):
     if data.get('pass'):
         application.status = ApplicationStatus.ACCEPTED.value
         application.save()
-        result = get_single_entity(application.author_id)
-        author = Author.objects.create(id=application.author_id, user=application.user, name=result.get('display_name'))
+        result = get_single_entity('author', application.author_id)
+        author = Author.objects.create(id=application.author_id, user=application.user, name=result[0]['display_name'])
         return JsonResponse({
             'success': True,
             'data': {
