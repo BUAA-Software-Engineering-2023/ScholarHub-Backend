@@ -12,7 +12,12 @@ from utils.upload import upload_file
 @request_methods(['POST'])
 def search_author_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('author', data)
+    result, success = search_entities_by_body('author', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
@@ -28,11 +33,11 @@ def author_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('author', author_id)
-    if not result:
+    result, success = get_single_entity('author', author_id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在此作者'
+            'message': result
         })
     author = Author.objects.filter(id=author_id).first()
     if author:

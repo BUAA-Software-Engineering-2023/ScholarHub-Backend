@@ -9,43 +9,72 @@ from utils.openalex import search_entities_by_body, get_single_entity
 @request_methods(['POST'])
 def search_sources_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('source', data)
+    result, success = search_entities_by_body('source', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def search_institutions_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('institution', data)
+    result, success = search_entities_by_body('institution', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def search_concepts_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('concept', data)
+    result, success = search_entities_by_body('concept', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def search_publishers_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('publisher', data)
+    result, success = search_entities_by_body('publisher', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
     })
 
+
 @request_methods(['POST'])
 def search_funders_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('funder', data)
+    result, success = search_entities_by_body('funder', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
@@ -61,16 +90,17 @@ def source_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('source', id)
-    if not result:
+    result, success = get_single_entity('source', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的来源'
+            'message': result
         })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def institution_detail_view(request):
@@ -81,16 +111,17 @@ def institution_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('institution', id)
-    if not result:
+    result, success = get_single_entity('institution', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的机构'
+            'message': result
         })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def concept_detail_view(request):
@@ -101,16 +132,17 @@ def concept_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('concept', id)
-    if not result:
+    result, success = get_single_entity('concept', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的话题'
+            'message': result
         })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def publisher_detail_view(request):
@@ -121,16 +153,17 @@ def publisher_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('publisher', id)
-    if not result:
+    result, success = get_single_entity('publisher', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的出版社'
+            'message': result
         })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
 
 @request_methods(['POST'])
 def funder_detail_view(request):
@@ -141,11 +174,11 @@ def funder_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('funder', id)
-    if not result:
+    result, success = get_single_entity('funder', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的基金会'
+            'message': result
         })
     return JsonResponse({
         'success': True,

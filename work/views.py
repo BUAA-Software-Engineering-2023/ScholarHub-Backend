@@ -12,7 +12,12 @@ from work.models import Work, WorkStatus
 @request_methods(['POST'])
 def search_works_view(request):
     data = json.loads(request.body)
-    result = search_entities_by_body('work', data)
+    result, success = search_entities_by_body('work', data)
+    if not success:
+        return JsonResponse({
+            'success': False,
+            'message': result
+        })
     return JsonResponse({
         'success': True,
         'data': result
@@ -28,11 +33,11 @@ def work_detail_view(request):
             'success': False,
             'message': '请给出id'
         })
-    result = get_single_entity('work', id)
-    if not result:
+    result, success = get_single_entity('work', id)
+    if not success:
         return JsonResponse({
             'success': False,
-            'message': '不存在的论文'
+            'message': result
         })
     return JsonResponse({
         'success': True,

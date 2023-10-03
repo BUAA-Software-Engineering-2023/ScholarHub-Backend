@@ -15,22 +15,20 @@ def get_verification_code_cache(email):
 
 
 def get_openalex_entities_key(
-        type: str, search: str, filter: dict = None,
-        sort: dict = None, page: int = 0, size: int = 25
+        type: str, search: str, position:str='default',
+        filter: dict = None, sort: dict = None,
+        page: int = 0, size: int = 25
 ):
-    if filter is None:
+    if not position:
+        position = 'default'
+    if not filter:
         filter = {}
-    if sort is None:
+    if not sort:
         sort = {}
-    for key, value in filter.items():
-        if not value:
-            filter.pop(key)
-    for key, value in sort.items():
-        if not value:
-            sort.pop(key)
     return json.dumps({
         'type': type,
         'search': search,
+        'position': position,
         'filter': filter,
         'sort': sort,
         'page': page,
@@ -46,6 +44,14 @@ def get_openalex_entities_cache(*args, **kwargs):
 def set_openalex_entities_cache(result: dict, *args, **kwargs):
     key = get_openalex_entities_key(*args, **kwargs)
     return cache.set(key, result)
+
+def get_openalex_single_entity_cache(type, id):
+    key = f'{type}_{id}'
+    return cache.get(key)
+
+def set_openalex_single_entity_cache(value, type, id):
+    key = f'{type}_{id}'
+    return cache.set(key, value)
 
 
 def get_comment_cache(work_id):
