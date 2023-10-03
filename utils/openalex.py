@@ -1,5 +1,10 @@
+import pyalex.api
 from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, Funders
-from .cache import get_openalex_entities_cache, set_openalex_entities_cache
+from pyalex.api import QueryError
+from requests import HTTPError
+
+from .cache import get_openalex_entities_cache, set_openalex_entities_cache, get_openalex_single_entity_cache, \
+    set_openalex_single_entity_cache
 
 entities = {
     'work': Works,
@@ -11,33 +16,64 @@ entities = {
     'funder': Funders
 }
 
-def search_entities(type:str, search: str, filter: dict = None, sort: dict = None, page: int = 1, size: int = 25):
-    if filter is None:
+entities_fields = {
+    'work': ['id', 'display_name', 'publication_year',
+             'publication_date', 'language', 'type',
+             'abstract_inverted_index', 'authorships',
+             'concepts', 'cited_by_count'],
+    'author': ['id', 'display_name', 'works_count',
+               'cited_by_count', 'x_concepts',
+               'last_known_institution'],
+    'source': ['id', 'display_name', 'country_code', 'type'],
+    'institution': ['id', 'display_name', 'country_code', 'type',
+                    'image_url', 'international', 'x_concepts'],
+    'concept': ['id', 'display_name', 'international'],
+    'publisher': ['id', 'display_name', 'alternate_titles',
+                  'country_codes', 'image_url'],
+    'funder': ['id', 'display_name', 'alternate_titles',
+               'country_code', 'description', 'image_url']
+}
+
+
+def search_entities(type: str, search: str, position: str = 'default', filter: dict = None, sort: dict = None,
+                    page: int = 1, size: int = 25):
+    if not position:
+        position = 'default'
+    if not filter:
         filter = {}
-    if sort is None:
+    if not sort:
         sort = {}
-    result = get_openalex_entities_cache(type, search, filter, sort, page, size)
+    result = get_openalex_entities_cache(type, search, position, filter, sort, page, size)
     if result is None:
-        result, meta = (entities[type]().search(search)
-                        .filter(**filter).sort(**sort)
-                        .get(return_meta=True, page=page, per_page=size))
+        try:
+            result, meta = entities[type]().search_filter(**{position: search}) \
+                .filter(**filter).sort(**sort).select(entities_fields[type]) \
+                .get(return_meta=True, page=page, per_page=size)
+        except QueryError as e:
+            return e.args[0], False
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return '不存在对应id的实体', False
+            print(e.args)
+            return 'OpenAlex请求出错', False
+        except Exception as e:
+            print(e.args)
+            return '未知错误', False
         if type == 'work':
             for r in result:
-                if r.get('abstract_inverted_index') is not None:
-                    r['abstract'] = r['abstract']
-                    del r['abstract_inverted_index']
-                else:
-                    r['abstract'] = ''
+                r['abstract'] = r['abstract']
+                del r['abstract_inverted_index']
         result = {
             'total': meta['count'],
             'page': meta['page'],
             'size': meta['per_page'],
             'result': result
         }
-        set_openalex_entities_cache(result, type, search, filter, sort, page, size)
-    return result
+        set_openalex_entities_cache(result, type, search, position, filter, sort, page, size)
+    return result, True
 
-def search_entities_by_body(type:str, data:dict):
+
+def search_entities_by_body(type: str, data: dict):
     """
     根据请求体参数搜索entities
     :param type: entities类别
@@ -45,25 +81,37 @@ def search_entities_by_body(type:str, data:dict):
     :return:
     """
     search = data.get('search', '')
-    filter = data.get('filter')
-    sort = data.get('sort')
+    position = data.get('position', 'default')
+    filter = data.get('filter', {})
+    sort = data.get('sort', {})
     page = int(data.get('page', 1))
     size = int(data.get('size', 25))
-    result = search_entities(type, search, filter, sort, page, size)
+
+    temp = filter.copy()
+    for key, value in temp.items():
+        if not value:
+            filter.pop(key)
+        if isinstance(value, list):
+            filter[key] = '|'.join(value)
+    temp = sort.copy()
+    for key, value in temp.items():
+        if not value:
+            sort.pop(key)
+    result = search_entities(type, search, position, filter, sort, page, size)
     return result
 
-def search_works_by_author_id(id:str):
+
+def search_works_by_author_id(id: str):
     try:
-        result, meta = Works().filter(author={"id": id}).get(return_meta=True)
+        result = Works().filter(author={"id": id}) \
+            .select(entities_fields['work']).get()
         for r in result:
-            if r.get('abstract_inverted_index') is not None:
-                r['abstract'] = r['abstract']
-                del r['abstract_inverted_index']
-            else:
-                r['abstract'] = ''
+            r['abstract'] = r['abstract']
+            del r['abstract_inverted_index']
     except:
         return None
     return result
+
 
 def calculate_collaborators(works: list, id: str):
     """
@@ -93,18 +141,36 @@ def calculate_collaborators(works: list, id: str):
     return collaborators
 
 
-def get_single_entity(type:str, id: str):
-    try:
-        result = entities[type]()[id]
-    except:
-        return None
-    if type == 'work':
-        if result.get('abstract_inverted_index') is not None:
+def get_single_entity(type: str, id: str):
+    result = get_openalex_single_entity_cache(type, id)
+    if result is None:
+        try:
+            result = entities[type]()[id]
+        except QueryError as e:
+            return e.args[0], False
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return '不存在对应id的实体', False
+            print(e.args)
+            return 'OpenAlex请求出错', False
+        except Exception as e:
+            print(e.args)
+            return '未知错误', False
+        if type == 'work':
             result['abstract'] = result['abstract']
             del result['abstract_inverted_index']
-        else:
-            result['abstract'] = ''
-    if type == 'author':
-        result['works'] = search_works_by_author_id(id)
-        result['collaborators'] = calculate_collaborators(result['works'], id)
-    return result
+
+            result['referenced_works'] = Works(
+                {'select': ['id', 'display_name', 'publication_year']}
+            )[result['referenced_works']]
+            result['related_works'] = Works(
+                {'select': ['id', 'display_name', 'publication_year']}
+            )[result['related_works']]
+
+        if type == 'author':
+            result['works'] = search_works_by_author_id(id)
+            result['collaborators'] = calculate_collaborators(result['works'], id)
+
+        set_openalex_single_entity_cache(result, type, id)
+
+    return result, True
