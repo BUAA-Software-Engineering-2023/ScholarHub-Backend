@@ -2,6 +2,7 @@ import json
 
 from django.http.response import JsonResponse
 
+from history.models import History
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
@@ -27,18 +28,30 @@ def search_works_view(request):
 @request_methods(['POST'])
 def work_detail_view(request):
     data = json.loads(request.body)
-    id = data.get('id')
-    if not id:
+    work_id = data.get('work_id')
+    if not work_id:
         return JsonResponse({
             'success': False,
             'message': '请给出id'
         })
-    result, success = get_single_entity('work', id)
+    result, success = get_single_entity('work', work_id)
     if not success:
         return JsonResponse({
             'success': False,
             'message': result
         })
+    if request.user:
+        try:
+            history = History.objects.get(work=work_id, user=request.user)
+        except History.DoesNotExist:
+            title = result['title']
+            history = History(title=title, work=work_id, user=request.user)
+            history.save()
+            return JsonResponse({
+                'success': True,
+                'data': result
+            })
+        history.save()
     return JsonResponse({
         'success': True,
         'data': result
