@@ -2,13 +2,12 @@ import json
 
 from django.http.response import JsonResponse
 
-from history.models import History
-from work.task import celery_create_history, celery_create_work
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
 from utils.upload import upload_file
 from work.models import Work, WorkStatus
+from work.task import *
 
 
 @request_methods(['POST'])
@@ -156,8 +155,10 @@ def verify_work_view(request):
         })
     if data.get('pass'):
         work.status = WorkStatus.ACCEPTED.value
+        celery_create_message.delay(work.author.user.id, f'您的作品{work.title}已通过审核')
     else:
         work.status = WorkStatus.REJECTED.value
+        celery_create_message.delay(work.author.user.id, f'您的作品{work.title}未通过审核')
     work.save()
     return JsonResponse({
         'success': True,

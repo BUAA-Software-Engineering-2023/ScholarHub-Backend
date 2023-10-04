@@ -2,9 +2,7 @@ import json
 
 from django.http import JsonResponse
 
-from comment.models import Comment
-from message.models import Message
-from comment.task import celery_create_comment
+from comment.task import *
 from utils.cache import get_comment_cache, set_comment_cache, clear_comment_cache
 from utils.decorator import request_methods
 from utils.token import auth_check
@@ -88,8 +86,7 @@ def create_comment_view(request):
             })
         celery_create_comment.delay(work_id, request.user.id, content, reply_id)
         clear_comment_cache(work_id)
-        message = Message(receiver=reply.sender, content=f'您的评论有了来自{request.user.username}的新回复')
-        message.save()
+        celery_create_message.delay(reply.sender.id, f'您的评论有了来自{request.user.nickname}的新回复')
         return JsonResponse({
             'success': True,
             'message': '回复评论成功',

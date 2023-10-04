@@ -2,8 +2,7 @@ import json
 
 from django.http import JsonResponse
 
-from author.models import Author, Application, ApplicationStatus
-from author.task import celery_create_application, celery_create_author
+from author.task import *
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
@@ -130,6 +129,7 @@ def process_application_view(request):
         result = get_single_entity('author', application.author_id)
         celery_create_author.delay(id=application.author_id, user_id=application.user.id,
                                    name=result[0]['display_name'])
+        celery_create_message.delay(application.user.id, '您的门户认证申请已通过')
         return JsonResponse({
             'success': True,
             'message': '申请批准成功',
@@ -141,6 +141,7 @@ def process_application_view(request):
     else:
         application.status = ApplicationStatus.REJECTED.value
         application.save()
+        celery_create_message.delay(application.user.id, '您的门户认证申请未通过')
         return JsonResponse({
             'success': True,
             'message': '申请拒绝成功',

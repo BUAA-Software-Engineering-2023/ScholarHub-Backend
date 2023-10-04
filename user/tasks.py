@@ -18,5 +18,5 @@ def celery_send_verification_code(email, code):
 
 @app.task()
 def celery_create_user(username, email, encrypted_password):
-    user = User(username=username, email=email, password=encrypted_password)
+    user = User(username=username, email=email, password=encrypted_password, nickname=username)
     user.save()

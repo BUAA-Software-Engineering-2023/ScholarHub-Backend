@@ -4,8 +4,7 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from message.models import Message
-from question.models import Question, Answer
+from question.task import *
 from utils.cache import get_question_cache, set_question_cache, clear_question_cache, get_answer_cache, \
     set_answer_cache, clear_answer_cache
 from utils.decorator import request_methods
@@ -47,21 +46,11 @@ class QuestionView(View):
                 'success': False,
                 'message': '标题和内容不能为空',
             })
-        question = Question(title=title, content=content, asker=asker)
-        question.save()
+        celery_create_question.delay(title, content, asker.id)
         clear_question_cache()
         return JsonResponse({
             'success': True,
             'message': '问题已发表',
-            'data': {
-                'question_id': question.id,
-                'title': question.title,
-                'content': question.content,
-                'asker_id': question.asker.id,
-                'asker_username': question.asker.username,
-                'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
         })
 
     @method_decorator(auth_check)
@@ -170,11 +159,12 @@ class AnswerView(View):
         data = json.loads(request.body)
         question_id = data.get('question_id')
         content = data.get('content')
+        title = data.get('title')
         answerer = request.user
-        if not (question_id and content):
+        if not (question_id and content and title):
             return JsonResponse({
                 'success': False,
-                'message': '问题id和回答内容不能为空',
+                'message': '问题id、标题和内容不能为空',
             })
         try:
             question = Question.objects.get(id=question_id)
@@ -183,24 +173,13 @@ class AnswerView(View):
                 'success': False,
                 'message': '问题不存在',
             })
-        answer = Answer(question=question, content=content, answerer=answerer)
-        answer.save()
+        celery_create_answer.delay(question_id, title, content, answerer.id)
         clear_answer_cache(question_id)
-        message = Message(
-            receiver=question.asker,
-            content='{}回答了你的问题：{}'.format(answerer.username, question.title),
-        )
-        message.save()
+        celery_create_message.delay(question.asker.id,
+                                    '{}回答了你的问题：{}'.format(answerer.nickname, question.title))
         return JsonResponse({
             'success': True,
-            'data': {
-                'answer_id': answer.id,
-                'content': answer.content,
-                'answerer_id': answer.answerer.id,
-                'answerer_username': answer.answerer.username,
-                'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'updated_at': answer.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
+            'message': '回答已发表',
         })
 
     @method_decorator(auth_check)
