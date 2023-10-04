@@ -1,0 +1,8 @@
+Django
+mysqlclient
+pyjwt
+pyalex
+django-cors-headers
+redis
+celery
+uwsgi

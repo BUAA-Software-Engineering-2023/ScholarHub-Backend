@@ -21,12 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6z^so@!g_!p*64=-*f#6tpn-2$443+io*&e@csq#+@#0!-t9i!'
+SECRET_KEY = os.environ.get('DJANGO_SECRET', 'django-insecure-6z^so@!g_!p*64=-*f#6tpn-2$443+io*&e@csq#+@#0!-t9i!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', True) in ['True', 'true', True, 1, '1']
 
 ALLOWED_HOSTS = ['*']
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Application definition
@@ -37,7 +40,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders'
+    'corsheaders',
+    'user',
+    'work',
+    'author',
+    'entity',
+    'comment',
+    'message',
+    'question',
+    'history',
+    'favorite'
 ]
 
 MIDDLEWARE = [
@@ -48,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'utils.token.TokenMiddleware'
 ]
 
 ROOT_URLCONF = 'ScholarHub.urls'
@@ -92,16 +105,25 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # 密码不能与用户名、邮箱太相似
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': [
+                'username', 'email'
+            ]
+        }
     },
     {
+        # 密码长度应大于8
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
+        # 密码不应为常见密码
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        # 密码至少包含大小写字母、数字、特殊字符中的2种
+        'NAME': 'utils.password_validation.PasswordCharacterValidator',
     },
 ]
 
@@ -143,6 +165,26 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
-                    f":{os.environ.get('REDIS_PORT', '6379')}"
+                    f":{os.environ.get('REDIS_PORT', '6379')}/0"
     }
 }
+
+# 邮件配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_USE_SSL = True
+
+# celery设置
+CELERY_BROKER_URL = (f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
+                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
+                     f":{os.environ.get('REDIS_PORT', '6379')}/1")
+CELERY_RESULT_BACKEND = (f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
+                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
+                     f":{os.environ.get('REDIS_PORT', '6379')}/2")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = "Asia/Shanghai"
