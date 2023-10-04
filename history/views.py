@@ -13,46 +13,20 @@ from utils.token import auth_check
 
 class HistoryView(View):
     @method_decorator(auth_check)
-    def post(self, request):
-        data = json.loads(request.body)
-        work_id = data.get('work_id')
-        if not work_id:
-            return JsonResponse({
-                'success': False,
-                'message': '请给出work_id'
+    def get(self, request):
+        user = request.user
+        history = user.history_set.all().order_by('-updated_at')
+        result = []
+        for h in history:
+            result.append({
+                'id': h.id,
+                'title': h.title,
+                'work': h.work,
+                'updated_at': h.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             })
-        result = get_single_entity('work', work_id)
-        if not result:
-            return JsonResponse({
-                'success': False,
-                'message': '该作品不存在'
-            })
-        try:
-            history = History.objects.get(work=work_id, user=request.user)
-        except History.DoesNotExist:
-            title = result[0]['title']
-            history = History(title=title, work=work_id, user=request.user)
-            history.save()
-            return JsonResponse({
-                'success': True,
-                'message': '添加成功',
-                'data': {
-                    'id': history.id,
-                    'title': title,
-                    'work': work_id,
-                    'updated_at': history.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-                }
-            })
-        history.save()
         return JsonResponse({
             'success': True,
-            'message': '更新成功',
-            'data': {
-                'id': history.id,
-                'title': history.title,
-                'work': history.work,
-                'updated_at': history.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
+            'data': result
         })
 
     @method_decorator(auth_check)
