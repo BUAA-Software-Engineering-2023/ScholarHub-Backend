@@ -2,8 +2,7 @@ from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, 
 from pyalex.api import QueryError
 from requests import HTTPError
 
-from .cache import get_openalex_entities_cache, set_openalex_entities_cache, get_openalex_single_entity_cache, \
-    set_openalex_single_entity_cache, get_openalex_entities_ids_cache, set_openalex_entities_ids_cache
+from .cache import *
 
 entities = {
     'work': Works,
@@ -238,3 +237,13 @@ def get_single_entity(type: str, id: str):
         set_openalex_single_entity_cache(result, type, id)
 
     return result, True
+
+
+def get_entities_numbers():
+    result = get_openalex_entities_numbers_cache()
+    if not result:
+        result = {}
+        for type in entities.keys():
+            result[f'{type}_count'] = entities[type]().count()
+        set_openalex_entities_numbers_cache(result)
+    return result
