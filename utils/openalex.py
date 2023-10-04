@@ -3,7 +3,7 @@ from pyalex.api import QueryError
 from requests import HTTPError
 
 from .cache import get_openalex_entities_cache, set_openalex_entities_cache, get_openalex_single_entity_cache, \
-    set_openalex_single_entity_cache
+    set_openalex_single_entity_cache, get_openalex_entities_ids_cache, set_openalex_entities_ids_cache
 
 entities = {
     'work': Works,
@@ -34,6 +34,27 @@ entities_fields = {
 }
 
 
+def get_entities_ids(type: str, search: str):
+    result = get_openalex_entities_ids_cache(type, search)
+    if result is None:
+        try:
+            result = entities[type]().search(search).select(['id']).get(per_page=10)
+        except QueryError as e:
+            return e.args[0], False
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return '不存在对应id的实体', False
+            print(e.args)
+            return 'OpenAlex请求出错', False
+        except Exception as e:
+            print(e.args)
+            return '未知错误', False
+        for i in range(len(result)):
+            result[i] = result[i]['id']
+        set_openalex_entities_ids_cache(result, type, search)
+    return result, True
+
+
 def search_entities(type: str, search: str, position: str = 'default', filter: dict = None, sort: dict = None,
                     page: int = 1, size: int = 25):
     if not position:
@@ -44,6 +65,50 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
         sort = {}
     result = get_openalex_entities_cache(type, search, position, filter, sort, page, size)
     if result is None:
+        temp = filter.copy()
+        # 特殊处理filter中的作者名authorships.author.display_name
+        if 'authorships.author.display_name' in filter:
+            ids, success = get_entities_ids('author', filter['authorships.author.display_name'])
+            if not success:
+                return ids, success
+            filter['authorships.author.id'] = '|'.join(ids)
+            del filter['authorships.author.display_name']
+        # 特殊处理filter中的机构名authorships.institutions.display_name
+        if 'authorships.institutions.display_name' in filter:
+            ids, success = get_entities_ids('institution', filter['authorships.institutions.display_name'])
+            if not success:
+                return ids, success
+            filter['authorships.institutions.id'] = '|'.join(ids)
+            del filter['authorships.institutions.display_name']
+        # 特殊处理filter中的主题名concepts.display_name
+        if 'concepts.display_name' in filter:
+            ids, success = get_entities_ids('concept', filter['concepts.display_name'])
+            if not success:
+                return ids, success
+            filter['concepts.id'] = '|'.join(ids)
+            del filter['concepts.display_name']
+        # 特殊处理filter中的机构名last_known_institution.display_name
+        if 'last_known_institution.display_name' in filter:
+            ids, success = get_entities_ids('institution', filter['last_known_institution.display_name'])
+            if not success:
+                return ids, success
+            filter['last_known_institution.id'] = '|'.join(ids)
+            del filter['last_known_institution.display_name']
+        # 特殊处理filter中的主题名x_concepts.display_name
+        if 'x_concepts.display_name' in filter:
+            ids, success = get_entities_ids('concept', filter['x_concepts.display_name'])
+            if not success:
+                return ids, success
+            filter['x_concepts.id'] = '|'.join(ids)
+            del filter['x_concepts.display_name']
+        # 特殊处理filter中的主题名ancestors.display_name
+        if 'ancestors.display_name' in filter:
+            ids, success = get_entities_ids('concept', filter['ancestors.display_name'])
+            if not success:
+                return ids, success
+            filter['ancestors.id'] = '|'.join(ids)
+            del filter['ancestors.display_name']
+
         try:
             result, meta = entities[type]().search_filter(**{position: search}) \
                 .filter(**filter).sort(**sort).select(entities_fields[type]) \
@@ -68,7 +133,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             'size': meta['per_page'],
             'result': result
         }
-        set_openalex_entities_cache(result, type, search, position, filter, sort, page, size)
+        set_openalex_entities_cache(result, type, search, position, temp, sort, page, size)
     return result, True
 
 
