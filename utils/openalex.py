@@ -251,7 +251,7 @@ def get_entities_numbers():
     return result
 
 
-def get_recommendations(history: list[str]):
+def get_recommendations(history: list):
     """
     根据浏览历史获取推荐，主要逻辑是获取最近浏览的10篇论文的相关论文，
     随机选取10篇作为推荐
