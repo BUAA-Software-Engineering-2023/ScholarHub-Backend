@@ -51,12 +51,22 @@ def set_openalex_entities_cache(result: dict, *args, **kwargs):
 
 
 def get_openalex_single_entity_cache(type, id):
-    key = f'{type}_{id}'
+    key = f'openalex_{type}_{id}'
     return cache.get(key)
 
 
 def set_openalex_single_entity_cache(value, type, id):
-    key = f'{type}_{id}'
+    key = f'openalex_{type}_{id}'
+    return cache.set(key, value)
+
+
+def get_openalex_entities_ids_cache(type, search):
+    key = f'openalex_ids_{type}_{search}'
+    return cache.get(key)
+
+
+def set_openalex_entities_ids_cache(value, type, search):
+    key = f'openalex_ids_{type}_{search}'
     return cache.set(key, value)
 
 
