@@ -2,11 +2,9 @@ import json
 
 from django.http import JsonResponse
 
-from comment.models import Comment
-from message.models import Message
+from comment.task import *
 from utils.cache import get_comment_cache, set_comment_cache, clear_comment_cache
 from utils.decorator import request_methods
-from utils.openalex import get_single_entity
 from utils.token import auth_check
 from utils.upload import upload_file
 
@@ -86,44 +84,19 @@ def create_comment_view(request):
                 'success': False,
                 'message': '回复评论不存在'
             })
-        comment = Comment(work=work_id, sender=request.user, content=content, reply=reply)
-        comment.save()
-        clear_comment_cache(comment.work)
-        message = Message(receiver=reply.sender, content=f'您的评论有了来自{request.user.username}的新回复')
-        message.save()
+        celery_create_comment.delay(work_id, request.user.id, content, reply_id)
+        clear_comment_cache(work_id)
+        celery_create_message.delay(reply.sender.id, f'您的评论有了来自{request.user.nickname}的新回复')
         return JsonResponse({
             'success': True,
             'message': '回复评论成功',
-            'data': {
-                'comment_id': comment.id,
-                'work_id': comment.work,
-                'sender_id': comment.sender.id,
-                'sender_username': comment.sender.username,
-                'content': comment.content,
-                'reply_id': comment.reply.id,
-                'reply_username': comment.reply.sender.username,
-                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
         })
     else:
-        comment = Comment(work=work_id, sender=request.user, content=content)
-        comment.save()
-        clear_comment_cache(comment.work)
+        celery_create_comment.delay(work_id, request.user.id, content)
+        clear_comment_cache(work_id)
         return JsonResponse({
             'success': True,
             'message': '评论成功',
-            'data': {
-                'comment_id': comment.id,
-                'work_id': comment.work,
-                'sender_id': comment.sender.id,
-                'sender_username': comment.sender.username,
-                'content': comment.content,
-                'reply_id': None,
-                'reply_username': None,
-                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
         })
 
 

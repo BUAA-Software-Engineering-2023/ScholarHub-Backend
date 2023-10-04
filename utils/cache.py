@@ -10,8 +10,12 @@ def set_verification_code_cache(email, code):
 def get_verification_code_cache(email):
     key = f'verification_code_{email}'
     code = cache.get(key)
-    cache.delete(key)
     return code
+
+
+def delete_verification_code_cache(email):
+    key = f'verification_code_{email}'
+    cache.delete(key)
 
 
 def get_openalex_entities_key(

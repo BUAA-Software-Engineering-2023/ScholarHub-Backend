@@ -9,8 +9,8 @@ from author.models import Author
 
 class Work(models.Model):
     id = models.CharField(primary_key=True, max_length=100)
-    title = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
+    title = models.TextField()
+    name = models.TextField()
     url = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=100)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)

@@ -13,23 +13,6 @@ from utils.token import auth_check
 
 class HistoryView(View):
     @method_decorator(auth_check)
-    def get(self, request):
-        user = request.user
-        history = user.history_set.all().order_by('-updated_at')
-        result = []
-        for h in history:
-            result.append({
-                'id': h.id,
-                'title': h.title,
-                'work': h.work,
-                'updated_at': h.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            })
-        return JsonResponse({
-            'success': True,
-            'data': result
-        })
-
-    @method_decorator(auth_check)
     def post(self, request):
         data = json.loads(request.body)
         work_id = data.get('work_id')
