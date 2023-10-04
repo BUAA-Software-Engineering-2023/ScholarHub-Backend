@@ -11,5 +11,7 @@ urlpatterns = [
     path('publisher/search', search_publishers_view),
     path('publisher/detail', publisher_detail_view),
     path('funder/search', search_funders_view),
-    path('funder/detail', funder_detail_view)
+    path('funder/detail', funder_detail_view),
+    path('total', get_total_numbers_view),
+    path('top', get_tops_view),
 ]

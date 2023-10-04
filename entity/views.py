@@ -3,7 +3,7 @@ import json
 from django.http.response import JsonResponse
 
 from utils.decorator import request_methods
-from utils.openalex import search_entities_by_body, get_single_entity
+from utils.openalex import *
 
 
 @request_methods(['POST'])
@@ -180,6 +180,29 @@ def funder_detail_view(request):
             'success': False,
             'message': result
         })
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })
+
+
+@request_methods(['GET'])
+def get_total_numbers_view(request):
+    result = get_entities_numbers()
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })
+
+
+@request_methods(['GET'])
+def get_tops_view(request):
+    result = search_entities_by_body('work', {
+        'size': 10,
+        'sort': {
+            'cited_by_count': 'desc'
+        }
+    })
     return JsonResponse({
         'success': True,
         'data': result

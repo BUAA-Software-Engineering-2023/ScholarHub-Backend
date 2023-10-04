@@ -70,6 +70,16 @@ def set_openalex_entities_ids_cache(value, type, search):
     return cache.set(key, value)
 
 
+def get_openalex_entities_numbers_cache():
+    key = 'openalex_entities_numbers'
+    return cache.get(key)
+
+
+def set_openalex_entities_numbers_cache(value):
+    key = 'openalex_entities_numbers'
+    return cache.set(key, value, 60 * 60 * 24)
+
+
 def get_comment_cache(work_id):
     key = f'comment_{work_id}'
     return cache.get(key)
