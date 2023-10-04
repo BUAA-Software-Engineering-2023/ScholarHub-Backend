@@ -282,14 +282,14 @@ def get_recommendations(history: list[str]):
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
-        ], 'sorted': {'cited_by_count': 'desc'}})[total]
+        ], 'sort': {'cited_by_count': 'desc'}})[list(total)]
         result = related_works[:10]
 
         # 获取最新的10篇
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
-        ], 'sorted': {'publication_date': 'desc'}})[total]
+        ], 'sort': {'publication_date': 'desc'}})[list(total)]
         result += related_works[:10]
 
         # 随机选取10篇
