@@ -1,3 +1,5 @@
+import random
+
 from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, Funders
 from pyalex.api import QueryError
 from requests import HTTPError
@@ -246,4 +248,52 @@ def get_entities_numbers():
         for type in entities.keys():
             result[f'{type}_count'] = entities[type]().count()
         set_openalex_entities_numbers_cache(result)
+    return result
+
+
+def get_recommendations(history: list[str]):
+    """
+    根据浏览历史获取推荐，主要逻辑是获取最近浏览的10篇论文的相关论文，
+    随机选取10篇作为推荐
+    :param history: 浏览历史
+    :return:
+    """
+    if not history:
+        # 没有历史记录不进行推荐
+        return None
+    # 保留副本
+    origin = history.copy()
+    # 根据最近浏览的10篇推荐
+    history = history[:10]
+    # 按id排序
+    history = sorted(history, key=lambda x: x)
+    result = get_openalex_recommendations_cache(history)
+    if not result:
+        # 获取相关论文的id
+        related_works = Works({'select': ['related_works']})[history]
+
+        total = set()
+        for related_work in related_works:
+            total.update(related_work['related_works'])
+        # 排除浏览过的论文
+        total = total - set(origin)
+
+        # 获取引用量最高的10篇
+        related_works = Works({'select': [
+            'id', 'display_name', 'publication_year',
+            'authorships', 'concepts', 'cited_by_count'
+        ], 'sorted': {'cited_by_count': 'desc'}})[total]
+        result = related_works[:10]
+
+        # 获取最新的10篇
+        related_works = Works({'select': [
+            'id', 'display_name', 'publication_year',
+            'authorships', 'concepts', 'cited_by_count'
+        ], 'sorted': {'publication_date': 'desc'}})[total]
+        result += related_works[:10]
+
+        # 随机选取10篇
+        result = random.choices(result, k=10)
+        # 加入缓存
+        set_openalex_recommendations_cache(result, history)
     return result

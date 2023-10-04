@@ -80,6 +80,16 @@ def set_openalex_entities_numbers_cache(value):
     return cache.set(key, value, 60 * 60 * 24)
 
 
+def get_openalex_recommendations_cache(history):
+    key = f'openalex_history_{history}'
+    return cache.get(key)
+
+
+def set_openalex_recommendations_cache(value, history, ttl=60 * 60 * 24):
+    key = f'openalex_history_{history}'
+    return cache.set(key, value, ttl)
+
+
 def get_comment_cache(work_id):
     key = f'comment_{work_id}'
     return cache.get(key)

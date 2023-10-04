@@ -196,14 +196,24 @@ def get_total_numbers_view(request):
 
 
 @request_methods(['GET'])
-def get_tops_view(request):
-    result = search_entities_by_body('work', {
-        'size': 10,
-        'sort': {
-            'cited_by_count': 'desc'
-        }
-    })
+def get_recommendations_view(request):
+    result = None
+    if request.user:
+        history = request.user.history_set.all().order_by('-updated_at')
+        temp = []
+        for h in history:
+            temp.append(h.work)
+        result = get_recommendations(temp)
+    if not result:
+        # 没有相关论文时，获取引用量最高的10篇
+        result = search_entities_by_body('work', {
+            'size': 10,
+            'sort': {
+                'cited_by_count': 'desc'
+            }
+        })
     return JsonResponse({
         'success': True,
         'data': result
     })
+
