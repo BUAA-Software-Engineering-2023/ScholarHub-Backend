@@ -3,6 +3,7 @@ import json
 from django.http.response import JsonResponse
 
 from history.models import History
+from work.task import celery_create_history, celery_create_work
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
@@ -45,8 +46,7 @@ def work_detail_view(request):
             history = History.objects.get(work=work_id, user=request.user)
         except History.DoesNotExist:
             title = result['title']
-            history = History(title=title, work=work_id, user=request.user)
-            history.save()
+            celery_create_history.delay(title, work_id, request.user.id)
             return JsonResponse({
                 'success': True,
                 'data': result
@@ -124,21 +124,11 @@ def upload_work_view(request):
                 'success': False,
                 'message': '该作品状态错误'
             })
-    work = Work(id=id, title=result[0]['title'], name=result[0]['display_name'], url=file,
-                status=WorkStatus.PENDING.value,
-                author=author)
-    work.save()
+    celery_create_work.delay(id, result[0]['title'], result[0]['display_name'], file, WorkStatus.PENDING.value,
+                             author.id)
     return JsonResponse({
         'success': True,
         'message': '上传成功',
-        'data': {
-            'id': work.id,
-            'title': work.title,
-            'name': work.name,
-            'url': work.url,
-            'status': WorkStatus.PENDING.info(),
-            'author': work.author.id
-        }
     })
 
 
@@ -235,7 +225,7 @@ def download_work_view(request):
         })
     else:
         try:
-            work = Work.objects.get(id=id)
+            work = Work.objects.get(id=id, status=WorkStatus.ACCEPTED.value)
         except Work.DoesNotExist:
             return JsonResponse({
                 'success': True,

@@ -6,7 +6,7 @@ from user.models import User
 # Create your models here.
 
 class Question(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.TextField()
     asker = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
