@@ -10,12 +10,16 @@ def set_verification_code_cache(email, code):
 def get_verification_code_cache(email):
     key = f'verification_code_{email}'
     code = cache.get(key)
-    cache.delete(key)
     return code
 
 
+def delete_verification_code_cache(email):
+    key = f'verification_code_{email}'
+    cache.delete(key)
+
+
 def get_openalex_entities_key(
-        type: str, search: str, position:str='default',
+        type: str, search: str, position: str = 'default',
         filter: dict = None, sort: dict = None,
         page: int = 0, size: int = 25
 ):
@@ -45,9 +49,11 @@ def set_openalex_entities_cache(result: dict, *args, **kwargs):
     key = get_openalex_entities_key(*args, **kwargs)
     return cache.set(key, result)
 
+
 def get_openalex_single_entity_cache(type, id):
     key = f'{type}_{id}'
     return cache.get(key)
+
 
 def set_openalex_single_entity_cache(value, type, id):
     key = f'{type}_{id}'

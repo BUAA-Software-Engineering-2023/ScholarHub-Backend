@@ -8,10 +8,10 @@ from django.core.validators import EmailValidator
 from django.http.response import JsonResponse
 
 from user.models import User
-from utils.cache import get_verification_code_cache, set_verification_code_cache
+from utils.cache import get_verification_code_cache, set_verification_code_cache, delete_verification_code_cache
 from utils.decorator import request_methods
 from utils.token import make_token, auth_check
-from .tasks import celery_send_verification_code
+from .tasks import celery_send_verification_code, celery_create_user
 
 
 @request_methods(['POST'])
@@ -50,7 +50,7 @@ def register_view(request):
     password = data.get('password')
     confirm_password = data.get('confirm_password')
 
-    if not username or not email or code or not password:
+    if not username or not email or not code or not password:
         return JsonResponse({
             'success': False,
             'message': '用户名、邮箱、验证码、密码不能为空'
@@ -102,9 +102,10 @@ def register_view(request):
     except ValidationError as e:
         return JsonResponse({
             'success': False,
-            'message': e.message.messages()[0].message
+            'message': e.messages[0]
         })
-    user.save()
+    celery_create_user.delay(username, email, encrypted_password)
+    delete_verification_code_cache(email)
     return JsonResponse({
         'success': True
     })
@@ -137,6 +138,7 @@ def login_view(request):
         })
 
     token = make_token({'id': user.id, 'username': user.username})
+    delete_verification_code_cache(user.email)
     return JsonResponse({
         'success': True,
         'data': {
@@ -146,7 +148,8 @@ def login_view(request):
             'nickname': user.nickname,
             'email': user.email,
             'is_admin': user.is_admin,
-            'is_author': user.author is not None
+            'is_author': user.author is not None,
+            'author_id': None if not user.author else user.author.id
         }
     })
 
@@ -163,7 +166,8 @@ def get_userinfo_view(request):
             'nickname': user.nickname,
             'email': user.email,
             'is_admin': user.is_admin,
-            'is_author': user.author is not None
+            'is_author': user.author is not None,
+            'author_id': None if not user.author else user.author.id
         }
     })
 
