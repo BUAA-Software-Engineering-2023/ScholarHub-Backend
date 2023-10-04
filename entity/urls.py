@@ -13,5 +13,5 @@ urlpatterns = [
     path('funder/search', search_funders_view),
     path('funder/detail', funder_detail_view),
     path('total', get_total_numbers_view),
-    path('top', get_tops_view),
+    path('recommend', get_recommendations_view),
 ]
