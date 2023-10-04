@@ -3,6 +3,7 @@ import json
 from django.http import JsonResponse
 
 from author.models import Author, Application, ApplicationStatus
+from author.task import celery_create_application, celery_create_author
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
@@ -75,15 +76,10 @@ def apply_view(request):
             'success': False,
             'message': '您已通过审核,请不要重复提交申请'
         })
-    application = Application.objects.create(user=request.user, status=ApplicationStatus.PENDING.value,
-                                             author_id=author_id)
+    celery_create_application.delay(request.user.id, ApplicationStatus.PENDING.value, author_id)
     return JsonResponse({
         'success': True,
-        'data': {
-            'application_id': application.id,
-            'status': ApplicationStatus.PENDING.info(),
-            'author_id': author_id
-        }
+        'message': '门户认证申请提交成功'
     })
 
 
@@ -91,14 +87,15 @@ def apply_view(request):
 @auth_check
 def list_application_view(request):
     if request.user.is_admin:
-        applications = Application.objects.all()
+        applications = Application.objects.all().order_by('-created_at')
     else:
-        applications = Application.objects.filter(user=request.user)
+        applications = Application.objects.filter(user=request.user).order_by('-created_at')
     result = []
     for application in applications:
         result.append({
             'application_id': application.id,
             'status': ApplicationStatus(application.status).info(),
+            'created_at': application.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         })
     return JsonResponse({
         'success': True,
@@ -131,14 +128,14 @@ def process_application_view(request):
         application.status = ApplicationStatus.ACCEPTED.value
         application.save()
         result = get_single_entity('author', application.author_id)
-        author = Author.objects.create(id=application.author_id, user=application.user, name=result[0]['display_name'])
+        celery_create_author.delay(id=application.author_id, user_id=application.user.id,
+                                   name=result[0]['display_name'])
         return JsonResponse({
             'success': True,
+            'message': '申请批准成功',
             'data': {
                 'application_id': application.id,
                 'status': ApplicationStatus.ACCEPTED.info(),
-                'author_id': author.id,
-                'author_name': author.name
             }
         })
     else:
@@ -146,6 +143,7 @@ def process_application_view(request):
         application.save()
         return JsonResponse({
             'success': True,
+            'message': '申请拒绝成功',
             'data': {
                 'application_id': application.id,
                 'status': ApplicationStatus.REJECTED.info(),
