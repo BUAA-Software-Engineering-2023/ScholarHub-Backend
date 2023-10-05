@@ -18,4 +18,4 @@ RUN mkdir -p /django/ScholarHub/media && \
 
 EXPOSE 8000
 
-CMD python manage.py makemigrations && python manage.py migrate && uwsgi --ini /django/ScholarHub/uwsgi.ini
+CMD python manage.py makemigrations && python manage.py migrate && python manage.py createadmin $ADMIN_EMAIL && uwsgi --ini /django/ScholarHub/uwsgi.ini
