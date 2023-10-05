@@ -7,4 +7,5 @@ urlpatterns = [
     path('login', login_view),
     path('user/update', update_userinfo_view),
     path('user/retrieve', retrieve_password_view),
+    path('user/info', get_userinfo_view)
 ]
