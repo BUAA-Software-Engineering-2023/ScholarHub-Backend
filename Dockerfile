@@ -11,7 +11,10 @@ ADD . /django/ScholarHub
 # 利用 pip 安装依赖
 RUN pip install -r requirements.txt
 
-RUN chmod 777 /django/ScholarHub/media
+RUN mkdir -p /django/ScholarHub/media && \
+    chmod 777 /django/ScholarHub/media && \
+    mkdir -p /django/ScholarHub/files && \
+    chmod 777 /django/ScholarHub/files
 
 EXPOSE 8000
 
