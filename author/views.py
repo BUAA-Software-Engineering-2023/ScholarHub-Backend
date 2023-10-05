@@ -124,12 +124,12 @@ def process_application_view(request):
             'message': '此申请已处理'
         })
     if data.get('pass'):
-        application.status = ApplicationStatus.ACCEPTED.value
-        application.save()
         result = get_single_entity('author', application.author_id)
         celery_create_author.delay(id=application.author_id, user_id=application.user.id,
                                    name=result[0]['display_name'])
         celery_create_message.delay(application.user.id, '您的门户认证申请已通过')
+        application.status = ApplicationStatus.ACCEPTED.value
+        application.save()
         return JsonResponse({
             'success': True,
             'message': '申请批准成功',
@@ -139,9 +139,9 @@ def process_application_view(request):
             }
         })
     else:
+        celery_create_message.delay(application.user.id, '您的门户认证申请未通过')
         application.status = ApplicationStatus.REJECTED.value
         application.save()
-        celery_create_message.delay(application.user.id, '您的门户认证申请未通过')
         return JsonResponse({
             'success': True,
             'message': '申请拒绝成功',
