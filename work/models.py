@@ -11,11 +11,14 @@ class Work(models.Model):
     id = models.CharField(primary_key=True, max_length=100)
     title = models.TextField()
     name = models.TextField()
-    url = models.CharField(max_length=100, null=True, blank=True)
+    path = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=100)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def url(self, request):
+        return request.build_absolute_uri(f'/api/v1/work/download?id={self.id}')
 
 
 class WorkStatus(Enum):
