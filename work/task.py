@@ -11,8 +11,8 @@ def celery_create_history(title, work_id, user_id):
 
 
 @app.task()
-def celery_create_work(id, title, name, url, status, author_id):
-    work = Work(id=id, title=title, name=name, url=url, status=status, author_id=author_id)
+def celery_create_work(id, title, name, path, status, author_id):
+    work = Work(id=id, title=title, name=name, path=path, status=status, author_id=author_id)
     work.save()
 
 

@@ -233,14 +233,6 @@ def get_single_entity(type: str, id: str):
                 {'select': ['id', 'display_name', 'publication_year']}
             )[result['related_works'][0:20]]
 
-            if not result['open_access']['is_oa']:
-                try:
-                    work = Work.objects.get(id=id, status=WorkStatus.ACCEPTED.value)
-                    result['open_access']['is_oa'] = True
-                    result['open_access']['oa_url'] = work.url
-                except Work.DoesNotExist:
-                    pass
-
         if type == 'author':
             result['works'] = search_works_by_author_id(id)
             result['collaborators'] = calculate_collaborators(result['works'], id)

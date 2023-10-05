@@ -6,6 +6,7 @@ urlpatterns = [
     path('work/detail', work_detail_view),
     path('work/upload', upload_work_view),
     path('work/verify', verify_work_view),
-    path('work/list', list_work_view),
+    path('work/mylist', mylist_work_view),
     path('work/download', download_work_view),
+    path('work/list', list_work_view)
 ]
