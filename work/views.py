@@ -1,13 +1,15 @@
 import json
+import os
 
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, StreamingHttpResponse
 
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity
 from utils.token import auth_check
-from utils.upload import upload_file
+from utils.upload import upload_file, upload_work
 from work.models import Work, WorkStatus
 from work.task import *
+from urllib.parse import quote
 
 
 @request_methods(['POST'])
@@ -40,6 +42,15 @@ def work_detail_view(request):
             'success': False,
             'message': result
         })
+
+    if not result['open_access']['is_oa']:
+        try:
+            work = Work.objects.get(id=id, status=WorkStatus.ACCEPTED.value)
+            result['open_access']['is_oa'] = True
+            result['open_access']['oa_url'] = work.url(request)
+        except Work.DoesNotExist:
+            pass
+
     if request.user:
         try:
             history = History.objects.get(work=work_id, user=request.user)
@@ -84,7 +95,7 @@ def upload_work_view(request):
             'success': False,
             'message': '该作品已开放访问'
         })
-    file = upload_file(request, 'pdf')
+    file = upload_work(request)
     if not file:
         return JsonResponse({
             'success': False,
@@ -98,7 +109,7 @@ def upload_work_view(request):
                 'message': '该作品已上传'
             })
         elif work.status == WorkStatus.REJECTED.value:
-            work.url = file
+            work.path = file
             work.status = WorkStatus.PENDING.value
             work.save()
             return JsonResponse({
@@ -108,7 +119,7 @@ def upload_work_view(request):
                     'id': work.id,
                     'title': work.title,
                     'name': work.name,
-                    'url': work.url,
+                    'url': work.url(request),
                     'status': WorkStatus.PENDING.info(),
                     'author': work.author.id
                 }
@@ -167,7 +178,7 @@ def verify_work_view(request):
             'id': work.id,
             'title': work.title,
             'name': work.name,
-            'url': work.url,
+            'url': work.url(request),
             'status': WorkStatus.ACCEPTED.info(),
             'author': work.author.id
         }
@@ -176,7 +187,7 @@ def verify_work_view(request):
 
 @request_methods(['GET'])
 @auth_check
-def list_work_view(request):
+def mylist_work_view(request):
     try:
         author = request.user.author
     except AttributeError:
@@ -191,7 +202,7 @@ def list_work_view(request):
             'id': work.id,
             'title': work.title,
             'name': work.name,
-            'url': work.url,
+            'url': work.url(request),
             'status': WorkStatus(work.status).info(),
             'author': work.author.id
         })
@@ -201,40 +212,69 @@ def list_work_view(request):
     })
 
 
-@request_methods(['POST'])
+@request_methods(['GET'])
 @auth_check
+def list_work_view(request):
+    if not request.user.is_admin:
+        return JsonResponse({
+            'success': False,
+            'message': '无权限'
+        })
+    works = Work.objects.filter(status=WorkStatus.PENDING.value)
+    data = []
+    for work in works:
+        data.append({
+            'id': work.id,
+            'title': work.title,
+            'name': work.name,
+            'url': work.url(request),
+            'status': WorkStatus(work.status).info(),
+            'author': work.author.id
+        })
+    return JsonResponse({
+        'success': True,
+        'data': data
+    })
+
+
+@request_methods(['GET'])
 def download_work_view(request):
-    data = json.loads(request.body)
-    id = data.get('id')
+    id = request.GET.get('id')
+    print(id)
     if not id:
         return JsonResponse({
             'success': False,
             'message': '请给出作品id'
         })
-    result = get_single_entity('work', id)
-    if not result:
+
+    try:
+        work = Work.objects.get(id=id)
+    except Work.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': '不存在的作品'
-        })
-    if result[0]['open_access']['is_oa']:
+            'message': '不存在可供下载的论文'
+        }, status=404)
+    if work.status == WorkStatus.REJECTED.value:
         return JsonResponse({
-            'success': True,
-            'data': {
-                'url': result[0]['open_access']['oa_url']
-            }
-        })
+            'success': False,
+            'message': '不存在可供下载的论文'
+        }, status=404)
+    if work.status == WorkStatus.PENDING.value and (not request.user or not request.user.is_admin):
+        return JsonResponse({
+            'success': False,
+            'message': '论文审核中，暂不支持下载'
+        }, status=403)
+
+    path = f'./files/{work.path}'
+
+    if os.path.exists(path):
+        response = StreamingHttpResponse(open(path, 'rb'),
+                                         content_type='application/pdf')
+        filename = work.title + '.pdf'
+        response['Content-Disposition'] = f'inline;filename="{quote(filename)}"'
+        return response
     else:
-        try:
-            work = Work.objects.get(id=id, status=WorkStatus.ACCEPTED.value)
-        except Work.DoesNotExist:
-            return JsonResponse({
-                'success': True,
-                'message': '该作品未开放访问'
-            })
         return JsonResponse({
-            'success': True,
-            'data': {
-                'url': work.url
-            }
-        })
+            'success': False,
+            'message': '不存在可供下载的论文'
+        }, status=404)

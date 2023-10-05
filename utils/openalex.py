@@ -4,6 +4,7 @@ from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, 
 from pyalex.api import QueryError
 from requests import HTTPError
 
+from work.models import *
 from .cache import *
 
 entities = {

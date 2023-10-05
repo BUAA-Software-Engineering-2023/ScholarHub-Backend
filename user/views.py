@@ -139,6 +139,10 @@ def login_view(request):
 
     token = make_token({'id': user.id, 'username': user.username})
     delete_verification_code_cache(user.email)
+    try:
+        author = user.author
+    except AttributeError:
+        author = None
     return JsonResponse({
         'success': True,
         'data': {
@@ -148,8 +152,8 @@ def login_view(request):
             'nickname': user.nickname,
             'email': user.email,
             'is_admin': user.is_admin,
-            'is_author': user.author is not None,
-            'author_id': None if not user.author else user.author.id
+            'is_author': author is not None,
+            'author_id': author.id if author else None
         }
     })
 
@@ -158,6 +162,10 @@ def login_view(request):
 @auth_check
 def get_userinfo_view(request):
     user = request.user
+    try:
+        author = user.author
+    except AttributeError:
+        author = None
     return JsonResponse({
         'success': True,
         'data': {
@@ -166,8 +174,8 @@ def get_userinfo_view(request):
             'nickname': user.nickname,
             'email': user.email,
             'is_admin': user.is_admin,
-            'is_author': user.author is not None,
-            'author_id': None if not user.author else user.author.id
+            'is_author': author is not None,
+            'author_id': author.id if author else None
         }
     })
 
