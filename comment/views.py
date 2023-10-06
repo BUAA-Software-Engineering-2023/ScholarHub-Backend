@@ -24,9 +24,9 @@ def list_comment_view(request):
     comments = get_comment_cache(work_id)
     if not comments:
         if reverse or reverse is None:
-            comments = Comment.objects.filter(work=work_id).order_by('-created_at')
+            comments = Comment.objects.filter(work=work_id).order_by('-is_top', '-created_at')
         else:
-            comments = Comment.objects.filter(work=work_id).order_by('created_at')
+            comments = Comment.objects.filter(work=work_id).order_by('-is_top', 'created_at')
         temp = {}
         for comment in comments:
             if not comment.reply:
@@ -42,6 +42,7 @@ def list_comment_view(request):
                 'sender_id': comment.sender.id,
                 'sender_username': comment.sender.username,
                 'content': comment.content,
+                'is_top': comment.is_top,
                 'replies': [build_comment_tree(reply) for reply in temp.get(comment.id, [])],
                 'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
@@ -201,3 +202,74 @@ def upload_image_view(request):
         'success': True,
         "data": file
     })
+
+
+@request_methods(['PATCH'])
+@auth_check
+def top_comment_view(request):
+    user = request.user
+    data = json.loads(request.body)
+    comment_id = data.get('comment_id')
+    if not comment_id:
+        return JsonResponse({
+            'success': False,
+            'message': '请提供评论信息'
+        })
+    try:
+        comment = Comment.objects.get(id=comment_id)
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '评论不存在'
+        })
+    if comment.reply:
+        return JsonResponse({
+            'success': False,
+            'message': '回复评论无法置顶'
+        })
+    if user.is_admin:
+        comment.is_top = True
+        comment.save()
+        clear_comment_cache(comment.work)
+        return JsonResponse({
+            'success': True,
+            'message': '置顶评论成功'
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': '无权限置顶评论'
+        })
+
+
+@request_methods(['PATCH'])
+@auth_check
+def untop_comment_view(request):
+    user = request.user
+    data = json.loads(request.body)
+    comment_id = data.get('comment_id')
+    if not comment_id:
+        return JsonResponse({
+            'success': False,
+            'message': '请提供评论信息'
+        })
+    try:
+        comment = Comment.objects.get(id=comment_id)
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '评论不存在'
+        })
+    if user.is_admin:
+        comment.is_top = False
+        comment.save()
+        clear_comment_cache(comment.work)
+        return JsonResponse({
+            'success': True,
+            'message': '取消置顶评论成功'
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': '无权限取消置顶评论'
+        })
