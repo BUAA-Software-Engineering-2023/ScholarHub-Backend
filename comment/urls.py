@@ -7,4 +7,6 @@ urlpatterns = [
     path('comment/delete', delete_comment_view),
     path('comment/modify', modify_comment_view),
     path('comment/upload', upload_image_view),
+    path('comment/top', top_comment_view),
+    path('comment/untop', untop_comment_view),
 ]
