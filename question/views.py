@@ -24,7 +24,7 @@ class QuestionView(View):
                 'question_id': question.id,
                 'title': question.title,
                 'asker_id': question.asker.id,
-                'asker_username': question.asker.username,
+                'asker_nickname': question.asker.nickname,
                 'content': question.content,
                 'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
@@ -87,7 +87,7 @@ class QuestionView(View):
                 'title': question.title,
                 'content': question.content,
                 'asker_id': question.asker.id,
-                'asker_username': question.asker.username,
+                'asker_nickname': question.asker.nickname,
                 'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             }
@@ -144,7 +144,7 @@ class AnswerView(View):
                 'answer_id': answer.id,
                 'content': answer.content,
                 'answerer_id': answer.answerer.id,
-                'answerer_username': answer.answerer.username,
+                'answerer_nickname': answer.answerer.nickname,
                 'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': answer.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             } for answer in answers]
@@ -159,12 +159,11 @@ class AnswerView(View):
         data = json.loads(request.body)
         question_id = data.get('question_id')
         content = data.get('content')
-        title = data.get('title')
         answerer = request.user
-        if not (question_id and content and title):
+        if not (question_id and content):
             return JsonResponse({
                 'success': False,
-                'message': '问题id、标题和内容不能为空',
+                'message': '问题id和内容不能为空',
             })
         try:
             question = Question.objects.get(id=question_id)
@@ -173,7 +172,7 @@ class AnswerView(View):
                 'success': False,
                 'message': '问题不存在',
             })
-        celery_create_answer.delay(question_id, title, content, answerer.id)
+        celery_create_answer.delay(question_id, content, answerer.id)
         clear_answer_cache(question_id)
         celery_create_message.delay(question.asker.id,
                                     '{}回答了你的问题：{}'.format(answerer.nickname, question.title))
@@ -213,7 +212,7 @@ class AnswerView(View):
                 'answer_id': answer.id,
                 'content': answer.content,
                 'answerer_id': answer.answerer.id,
-                'answerer_username': answer.answerer.username,
+                'answerer_nickname': answer.answerer.nickname,
                 'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'updated_at': answer.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             }
