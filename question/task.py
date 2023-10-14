@@ -10,8 +10,8 @@ def celery_create_question(title, content, asker_id):
 
 
 @app.task()
-def celery_create_answer(question_id, title, content, answerer_id):
-    answer = Answer(question_id=question_id, title=title, content=content, answerer_id=answerer_id)
+def celery_create_answer(question_id, content, answerer_id):
+    answer = Answer(question_id=question_id, content=content, answerer_id=answerer_id)
     answer.save()
 
 
