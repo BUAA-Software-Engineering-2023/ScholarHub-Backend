@@ -3,8 +3,8 @@ import random
 from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, Funders
 from pyalex.api import QueryError
 from requests import HTTPError
+import requests
 
-from work.models import *
 from .cache import *
 
 entities = {
@@ -297,4 +297,19 @@ def get_recommendations(history: list):
         result = random.choices(result, k=10)
         # 加入缓存
         set_openalex_recommendations_cache(result, history)
+    return result
+
+
+def autocomplete(type: str, search: str):
+    result = get_openalex_autocomplete_cache(type, search)
+    if not result:
+        url = f'https://api.openalex.org/autocomplete/{type}s?q={search}'
+        try:
+            result = requests.get(url)
+        except HTTPError:
+            return []
+        if result.status_code != 200:
+            return []
+        result = result.json()['results']
+        set_openalex_autocomplete_cache(result, type, search)
     return result

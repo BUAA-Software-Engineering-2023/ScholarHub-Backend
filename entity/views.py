@@ -217,3 +217,52 @@ def get_recommendations_view(request):
         'data': result
     })
 
+
+@request_methods(['GET'])
+def autocomplete_source_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('source', search)
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })
+
+
+@request_methods(['GET'])
+def autocomplete_institution_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('institution', search)
+    return (JsonResponse({
+        'success': True,
+        'data': result
+    }))
+
+
+@request_methods(['GET'])
+def autocomplete_concept_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('concept', search)
+    return (JsonResponse({
+        'success': True,
+        'data': result
+    }))
+
+
+@request_methods(['GET'])
+def autocomplete_publisher_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('publisher', search)
+    return (JsonResponse({
+        'success': True,
+        'data': result
+    }))
+
+
+@request_methods(['GET'])
+def autocomplete_funder_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('funder', search)
+    return (JsonResponse({
+        'success': True,
+        'data': result
+    }))
