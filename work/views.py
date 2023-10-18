@@ -4,7 +4,7 @@ import os
 from django.http.response import JsonResponse, StreamingHttpResponse
 
 from utils.decorator import request_methods
-from utils.openalex import search_entities_by_body, get_single_entity
+from utils.openalex import search_entities_by_body, get_single_entity, autocomplete
 from utils.token import auth_check
 from utils.upload import upload_file, upload_work
 from work.models import Work, WorkStatus
@@ -278,3 +278,13 @@ def download_work_view(request):
             'success': False,
             'message': '不存在可供下载的论文'
         }, status=404)
+
+
+@request_methods(['GET'])
+def autocomplete_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('work', search)
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })

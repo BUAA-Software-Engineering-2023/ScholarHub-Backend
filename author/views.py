@@ -4,7 +4,7 @@ from django.http import JsonResponse
 
 from author.task import *
 from utils.decorator import request_methods
-from utils.openalex import search_entities_by_body, get_single_entity
+from utils.openalex import search_entities_by_body, get_single_entity, autocomplete
 from utils.token import auth_check
 from utils.upload import upload_file
 
@@ -195,4 +195,14 @@ def upload_avatar_view(request):
     return JsonResponse({
         'success': True,
         "data": file
+    })
+
+
+@request_methods(['GET'])
+def autocomplete_author_view(request):
+    search = request.GET.get('search')
+    result = autocomplete('author', search)
+    return JsonResponse({
+        'success': True,
+        'data': result
     })

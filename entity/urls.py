@@ -14,4 +14,9 @@ urlpatterns = [
     path('funder/detail', funder_detail_view),
     path('total', get_total_numbers_view),
     path('recommend', get_recommendations_view),
+    path('source/autocomplete', autocomplete_source_view),
+    path('institution/autocomplete', autocomplete_institution_view),
+    path('concept/autocomplete', autocomplete_concept_view),
+    path('publisher/autocomplete', autocomplete_publisher_view),
+    path('funder/autocomplete', autocomplete_funder_view),
 ]

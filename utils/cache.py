@@ -90,6 +90,16 @@ def set_openalex_recommendations_cache(value, history, ttl=60 * 60 * 24):
     return cache.set(key, value, ttl)
 
 
+def get_openalex_autocomplete_cache(type, search):
+    key = f'openalex_autocomplete_{type}_{search}'
+    return cache.get(key)
+
+
+def set_openalex_autocomplete_cache(value, type, search):
+    key = f'openalex_autocomplete_{type}_{search}'
+    return cache.set(key, value)
+
+
 def get_comment_cache(work_id):
     key = f'comment_{work_id}'
     return cache.get(key)

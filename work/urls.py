@@ -8,5 +8,6 @@ urlpatterns = [
     path('work/verify', verify_work_view),
     path('work/mylist', mylist_work_view),
     path('work/download', download_work_view),
-    path('work/list', list_work_view)
+    path('work/list', list_work_view),
+    path('work/autocomplete', autocomplete_view)
 ]
