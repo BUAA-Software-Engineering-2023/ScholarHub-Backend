@@ -9,4 +9,5 @@ urlpatterns = [
     path('author/process-application', process_application_view),
     path('author/edit', edit_author_view),
     path('author/avatar', upload_avatar_view),
+    path('author/autocomplete', autocomplete_author_view)
 ]
