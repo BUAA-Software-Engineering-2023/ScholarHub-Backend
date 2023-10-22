@@ -4,8 +4,8 @@ from question.models import *
 
 
 @app.task()
-def celery_create_question(title, content, asker_id):
-    question = Question(title=title, content=content, asker_id=asker_id)
+def celery_create_question(work_id, title, content, asker_id):
+    question = Question(work=work_id, title=title, content=content, asker_id=asker_id)
     question.save()
 
 
