@@ -11,6 +11,7 @@ from user.models import User
 from utils.cache import get_verification_code_cache, set_verification_code_cache, delete_verification_code_cache
 from utils.decorator import request_methods
 from utils.token import make_token, auth_check
+from utils.upload import upload_file
 from .tasks import celery_send_verification_code, celery_create_user
 
 
@@ -172,6 +173,7 @@ def get_userinfo_view(request):
             'id': user.id,
             'username': user.username,
             'nickname': user.nickname,
+            'avatar': user.avatar,
             'email': user.email,
             'is_admin': user.is_admin,
             'is_author': author is not None,
@@ -186,9 +188,22 @@ def update_userinfo_view(request):
     user = request.user
     data = json.loads(request.body)
     nickname = data.get('nickname', user.nickname)
+    avatar = data.get('avatar', user.avatar)
+    user.nickname = nickname
+    user.avatar = avatar
+    user.save()
+    return JsonResponse({
+        'success': True,
+        'message': '修改成功'
+    })
+
+
+@request_methods(['PUT'])
+@auth_check
+def update_email_view(request):
+    user = request.user
+    data = json.loads(request.body)
     email = data.get('email', user.email)
-    old_password = data.get('old_password')
-    new_password = data.get('new_password')
     code = data.get('code')
     if email != user.email:
         try:
@@ -212,25 +227,45 @@ def update_userinfo_view(request):
                 'success': False,
                 'message': '验证码错误'
             })
-    if old_password and new_password:
-        if not check_password(old_password, user.password):
-            return JsonResponse({
-                'success': False,
-                'message': '原密码错误'
-            })
-        user.password = make_password(new_password)
-    user.nickname = nickname
-    user.email = email
+        user.email = email
+        return JsonResponse({
+            'success': True,
+            'message': '修改成功'
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': '新邮箱地址不能与旧邮箱相同'
+        })
+
+
+@request_methods(['PUT'])
+@auth_check
+def update_password_view(request):
+    user = request.user
+    data = json.loads(request.body)
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    if not old_password or not new_password:
+        return JsonResponse({
+            'success': False,
+            'message': '旧密码或新密码不能为空'
+        })
+    if not check_password(old_password, user.password):
+        return JsonResponse({
+            'success': False,
+            'message': '原密码错误'
+        })
+    if old_password == new_password:
+        return JsonResponse({
+            'success': False,
+            'message': '新旧密码不能相同'
+        })
+    user.password = make_password(new_password)
     user.save()
     return JsonResponse({
         'success': True,
-        'message': '修改成功',
-        'data': {
-            'id': user.id,
-            'username': user.username,
-            'nickname': user.nickname,
-            'email': user.email
-        }
+        'message': '修改成功'
     })
 
 
@@ -256,4 +291,19 @@ def retrieve_password_view(request):
     return JsonResponse({
         'success': True,
         'message': '修改成功'
+    })
+
+
+@request_methods(['POST'])
+@auth_check
+def upload_avatar_view(request):
+    file = upload_file(request, 'image')
+    if not file:
+        return JsonResponse({
+            'success': False,
+            'message': '图片格式错误'
+        })
+    return JsonResponse({
+        'success': True,
+        "data": file
     })

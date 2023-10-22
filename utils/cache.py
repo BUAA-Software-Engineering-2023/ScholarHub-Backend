@@ -115,31 +115,46 @@ def clear_comment_cache(work_id):
     return cache.delete(key)
 
 
-def get_question_cache():
+def get_questions_cache():
     key = 'question'
     return cache.get(key)
 
 
-def set_question_cache(result):
+def set_questions_cache(result):
     key = 'question'
     return cache.set(key, result)
 
 
-def clear_question_cache():
+def clear_questions_cache():
     key = 'question'
     return cache.delete(key)
 
 
-def get_answer_cache(question_id):
-    key = f'answer_{question_id}'
+def get_question_cache(question_id):
+    key = f'question_{question_id}'
     return cache.get(key)
 
 
-def set_answer_cache(question_id, result):
-    key = f'answer_{question_id}'
+def set_question_cache(result, question_id):
+    key = f'question_{question_id}'
     return cache.set(key, result)
 
 
-def clear_answer_cache(question_id):
-    key = f'answer_{question_id}'
+def clear_question_cache(question_id):
+    key = f'question_{question_id}'
+    return cache.delete(key)
+
+
+def get_answer_cache(answer_id):
+    key = f'answer_{answer_id}'
+    return cache.get(key)
+
+
+def set_answer_cache(answer_id, result):
+    key = f'answer_{answer_id}'
+    return cache.set(key, result)
+
+
+def clear_answer_cache(answer_id):
+    key = f'answer_{answer_id}'
     return cache.delete(key)
