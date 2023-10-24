@@ -171,5 +171,5 @@ class FavoriteItemView(View):
             })
         return JsonResponse({
             'success': True,
-            'data': [item.info() for item in favorite.favoriteitem_set.all().order_by('-created_at')],
+            'data': favorite.info(),
         })
