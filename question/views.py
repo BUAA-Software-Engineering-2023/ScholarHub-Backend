@@ -167,7 +167,7 @@ class AnswerView(View):
             except Answer.DoesNotExist:
                 return JsonResponse({
                     'success': False,
-                    'message': '问题不存在',
+                    'message': '回答不存在',
                 })
             answer = {
                 'answer_id': answer.id,

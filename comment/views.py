@@ -119,7 +119,7 @@ def delete_comment_view(request):
             'success': False,
             'message': '评论不存在'
         })
-    if user.is_admin:
+    if user.is_admin or comment.sender == request.user:
         comment.delete()
         clear_comment_cache(comment.work)
         return JsonResponse({
