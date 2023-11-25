@@ -24,7 +24,7 @@ entities_fields = {
              'concepts', 'cited_by_count'],
     'author': ['id', 'display_name', 'works_count',
                'cited_by_count', 'x_concepts',
-               'last_known_institution'],
+               'last_known_institution', 'summary_stats'],
     'source': ['id', 'display_name', 'country_code', 'type'],
     'institution': ['id', 'display_name', 'country_code', 'type',
                     'image_url', 'international', 'x_concepts'],
