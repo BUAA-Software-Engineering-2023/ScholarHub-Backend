@@ -4,7 +4,7 @@ from django.http import JsonResponse
 
 from author.task import *
 from utils.decorator import request_methods
-from utils.openalex import search_entities_by_body, get_single_entity, autocomplete
+from utils.openalex import search_entities_by_body, get_single_entity, autocomplete, search_works_by_author_id
 from utils.token import auth_check
 from utils.upload import upload_file
 
@@ -23,6 +23,28 @@ def search_author_view(request):
         'data': result
     })
 
+
+@request_methods(['POST'])
+def get_author_work_view(request):
+    data = json.loads(request.body)
+    author_id = data.get('author_id')
+    page = data.get('page', 1)
+    size = data.get('size', 25)
+    if not author_id:
+        return JsonResponse({
+            'success': False,
+            'message': '请给出作者id'
+        })
+    result = search_works_by_author_id(author_id, page, size)
+    if result is None:
+        return JsonResponse({
+            'success': False,
+            'message': '作者不存在'
+        })
+    return JsonResponse({
+        'success': True,
+        'data': result
+    })
 
 @request_methods(['POST'])
 def author_detail_view(request):

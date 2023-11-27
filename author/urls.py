@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('author/search', search_author_view),
+    path('author/work', get_author_work_view),
     path('author/detail', author_detail_view),
     path('author/apply', apply_view),
     path('author/list-application', list_application_view),

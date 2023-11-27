@@ -1,4 +1,5 @@
 import random
+from typing import Optional
 
 from pyalex import Works, Authors, Sources, Institutions, Concepts, Publishers, Funders
 from pyalex.api import QueryError
@@ -167,15 +168,33 @@ def search_entities_by_body(type: str, data: dict):
     return result
 
 
-def search_works_by_author_id(id: str):
+def search_works_by_author_id(id, page=None, size=25, return_meta=True):
+    if page is None:
+        page = 1
+        return_meta = False
+    meta = None
     try:
-        result = Works().filter(author={"id": id}) \
-            .select(entities_fields['work']).get()
-        for r in result:
-            r['abstract'] = r['abstract']
-            del r['abstract_inverted_index']
-    except:
+        if return_meta:
+            result, meta = Works().filter(author={"id": id}) \
+                .select(entities_fields['work']) \
+                .get(return_meta=True, page=page, per_page=size)
+        else:
+            result = Works().filter(author={"id": id}) \
+                .select(entities_fields['work']) \
+                .get(return_meta=False, page=page, per_page=size)
+    except Exception as e:
+        print(e.args)
         return None
+    for r in result:
+        r['abstract'] = r['abstract']
+        del r['abstract_inverted_index']
+    if return_meta:
+        return {
+            'total': meta['count'],
+            'page': meta['page'],
+            'size': meta['per_page'],
+            'result': result
+        }
     return result
 
 

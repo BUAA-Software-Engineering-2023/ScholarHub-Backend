@@ -6,7 +6,9 @@ from work.models import Work
 
 @app.task()
 def celery_create_history(title, work_id, user_id):
-    history = History(title=title, work=work_id, user_id=user_id)
+    history = History.objects.filter(work=work_id, user=user_id)
+    if history is None:
+        history = History(title=title, work=work_id, user_id=user_id)
     history.save()
 
 
