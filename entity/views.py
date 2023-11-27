@@ -206,12 +206,17 @@ def get_recommendations_view(request):
         result = get_recommendations(temp)
     if not result:
         # 没有相关论文时，获取引用量最高的10篇
-        result = search_entities_by_body('work', {
+        result, success = search_entities_by_body('work', {
             'size': 10,
             'sort': {
                 'cited_by_count': 'desc'
             }
         })
+        if not success:
+            JsonResponse({
+                'success': False,
+                'message': "获取openalex数据失败"
+            })
         result = result.result
     return JsonResponse({
         'success': True,
