@@ -217,7 +217,7 @@ def get_recommendations_view(request):
                 'success': False,
                 'message': "获取openalex数据失败"
             })
-        result = result.result
+        result = result["result"]
     return JsonResponse({
         'success': True,
         'data': result
