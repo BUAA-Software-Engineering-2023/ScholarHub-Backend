@@ -212,6 +212,7 @@ def get_recommendations_view(request):
                 'cited_by_count': 'desc'
             }
         })
+        result = result.result
     return JsonResponse({
         'success': True,
         'data': result
