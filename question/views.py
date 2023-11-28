@@ -1,5 +1,3 @@
-import json
-
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -17,50 +15,35 @@ from utils.upload import upload_file
 class QuestionView(View):
     def get(self, request):
         question_id = request.GET.get('question_id')
-        if question_id:
-            question = get_question_cache(question_id)
-            if not question:
-                try:
-                    question = Question.objects.get(id=question_id)
-                except Question.DoesNotExist:
-                    return JsonResponse({
-                        'success': False,
-                        'message': '问题不存在',
-                    })
-                question = {
-                    'question_id': question.id,
-                    'title': question.title,
-                    'asker_id': question.asker.id,
-                    'asker_nickname': question.asker.nickname,
-                    'content': question.content,
-                    'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'answers': [answer.info() for answer in question.answer_set.all().order_by('-created_at')]
-                }
-                set_question_cache(question, question_id)
+        if not question_id:
             return JsonResponse({
-                'success': True,
-                'data': question,
+                'success': False,
+                'message': '问题id不能为空',
             })
-        else:
-            questions = get_questions_cache()
-            if not questions:
-                questions = Question.objects.all().order_by('-created_at')
-                questions = [{
-                    'question_id': question.id,
-                    'title': question.title,
-                    'asker_id': question.asker.id,
-                    'asker_nickname': question.asker.nickname,
-                    'content': question.content,
-                    'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'answers': [answer.info() for answer in question.answer_set.all().order_by('-created_at')]
-                } for question in questions]
-                set_questions_cache(questions)
-            return JsonResponse({
-                'success': True,
-                'data': questions,
-            })
+        question = get_question_cache(question_id)
+        if not question:
+            try:
+                question = Question.objects.get(id=question_id)
+            except Question.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'message': '问题不存在',
+                })
+            question = {
+                'question_id': question.id,
+                'title': question.title,
+                'asker_id': question.asker.id,
+                'asker_nickname': question.asker.nickname,
+                'content': question.content,
+                'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'answers': [answer.info() for answer in question.answer_set.all().order_by('-created_at')]
+            }
+            set_question_cache(question, question_id)
+        return JsonResponse({
+            'success': True,
+            'data': question,
+        })
 
     @method_decorator(auth_check)
     def post(self, request):
@@ -75,7 +58,7 @@ class QuestionView(View):
                 'message': '标题、内容及论文id不能为空',
             })
         celery_create_question.delay(work_id, title, content, asker.id)
-        clear_questions_cache()
+        clear_questions_cache(work_id)
         return JsonResponse({
             'success': True,
             'message': '问题已发表',
@@ -107,7 +90,7 @@ class QuestionView(View):
         question.title = title
         question.content = content
         question.save()
-        clear_questions_cache()
+        clear_questions_cache(question.work.id)
         clear_question_cache(question_id)
         return JsonResponse({
             'success': True,
@@ -144,7 +127,7 @@ class QuestionView(View):
                 'message': '只能删除自己的问题',
             })
         question.delete()
-        clear_questions_cache()
+        clear_questions_cache(question.work.id)
         clear_question_cache(question_id)
         return JsonResponse({
             'success': True,
@@ -202,7 +185,7 @@ class AnswerView(View):
                 'message': '问题不存在',
             })
         celery_create_answer.delay(question_id, content, answerer.id)
-        clear_questions_cache()
+        clear_questions_cache(question.work.id)
         clear_question_cache(question_id)
         celery_create_message.delay(question.asker.id,
                                     '{}回答了你的问题：{}'.format(answerer.nickname, question.title))
@@ -236,7 +219,7 @@ class AnswerView(View):
         answer.content = content
         answer.save()
         clear_answer_cache(answer_id)
-        clear_questions_cache()
+        clear_questions_cache(answer.question.work.id)
         clear_question_cache(answer.question.id)
         return JsonResponse({
             'success': True,
@@ -273,7 +256,7 @@ class AnswerView(View):
             })
         answer.delete()
         clear_answer_cache(answer_id)
-        clear_questions_cache()
+        clear_questions_cache(answer.question.work.id)
         clear_question_cache(answer.question.id)
         return JsonResponse({
             'success': True,
@@ -293,4 +276,34 @@ def upload_image_view(request):
     return JsonResponse({
         'success': True,
         "data": file
+    })
+
+
+@request_methods(['POST'])
+@auth_check
+def get_questions_view(request):
+    data = json.loads(request.body)
+    work_id = data.get('work_id')
+    if not work_id:
+        return JsonResponse({
+            'success': False,
+            'message': '论文id不能为空',
+        })
+    questions = get_questions_cache(work_id)
+    if not questions:
+        questions = Question.objects.filter(work=work_id).order_by('-created_at')
+        questions = [{
+            'question_id': question.id,
+            'title': question.title,
+            'asker_id': question.asker.id,
+            'asker_nickname': question.asker.nickname,
+            'content': question.content,
+            'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': question.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'answers': [answer.info() for answer in question.answer_set.all().order_by('-created_at')]
+        } for question in questions]
+        set_questions_cache(work_id, questions)
+    return JsonResponse({
+        'success': True,
+        'data': questions,
     })

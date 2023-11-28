@@ -100,6 +100,21 @@ def set_openalex_autocomplete_cache(value, type, search):
     return cache.set(key, value)
 
 
+def get_openalex_histories_details_cache(user_id):
+    key = f'openalex_histories_details_{user_id}'
+    return cache.get(key)
+
+
+def set_openalex_histories_details_cache(value, user_id):
+    key = f'openalex_histories_details_{user_id}'
+    return cache.set(key, value)
+
+
+def clear_openalex_histories_details_cache(user_id):
+    key = f'openalex_histories_details_{user_id}'
+    return cache.delete(key)
+
+
 def get_comment_cache(work_id):
     key = f'comment_{work_id}'
     return cache.get(key)
@@ -115,18 +130,18 @@ def clear_comment_cache(work_id):
     return cache.delete(key)
 
 
-def get_questions_cache():
-    key = 'question'
+def get_questions_cache(work_id):
+    key = f'questions_{work_id}'
     return cache.get(key)
 
 
-def set_questions_cache(result):
-    key = 'question'
+def set_questions_cache(work_id, result):
+    key = f'questions_{work_id}'
     return cache.set(key, result)
 
 
-def clear_questions_cache():
-    key = 'question'
+def clear_questions_cache(work_id):
+    key = f'questions_{work_id}'
     return cache.delete(key)
 
 

@@ -263,6 +263,28 @@ def get_single_entity(type: str, id: str):
     return result, True
 
 
+def get_histories_details(works, user_id):
+    result = get_openalex_histories_details_cache(user_id)
+    if result is None:
+        try:
+            histories_details = Works({'select': ['id', 'display_name', 'publication_year',
+                                                  'authorships', 'type', 'concepts', 'cited_by_count']})[works]
+        except QueryError as e:
+            return e.args[0], False
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return '不存在对应id的实体', False
+            print(e.args)
+            return 'OpenAlex请求出错', False
+        except Exception as e:
+            print(e.args)
+            return '未知错误', False
+        result = {history_detail['id']: {key: value for key, value in history_detail.items() if key != 'id'} for
+                  history_detail in histories_details}
+        set_openalex_histories_details_cache(result, user_id)
+    return result
+
+
 def get_entities_numbers():
     result = get_openalex_entities_numbers_cache()
     if not result:
