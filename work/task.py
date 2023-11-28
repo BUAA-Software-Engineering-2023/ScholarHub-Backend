@@ -1,15 +1,18 @@
 from ScholarHub.celery import app
 from history.models import History
 from message.models import Message
+from utils.cache import clear_openalex_histories_details_cache
 from work.models import Work
 
 
 @app.task()
 def celery_create_history(title, work_id, user_id):
-    history = History.objects.filter(work=work_id, user=user_id)
-    if history is None:
+    try:
+        History.objects.get(work=work_id, user=user_id)
+    except History.DoesNotExist:
         history = History(title=title, work=work_id, user_id=user_id)
-    history.save()
+        clear_openalex_histories_details_cache(user_id)
+        history.save()
 
 
 @app.task()

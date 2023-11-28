@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from history.models import History
-from utils.openalex import get_single_entity
+from utils.openalex import get_single_entity, get_histories_details
 from utils.token import auth_check
 
 
@@ -17,12 +17,21 @@ class HistoryView(View):
         user = request.user
         history = user.history_set.all().order_by('-updated_at')
         result = []
+        works = [h.work for h in history]
+        histories_details = get_histories_details(works, user.id)
         for h in history:
+            history_detail = histories_details.get(h.work)
             result.append({
                 'id': h.id,
                 'title': h.title,
                 'work': h.work,
                 'updated_at': h.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'display_name': history_detail.get('display_name'),
+                'publication_year': history_detail.get('publication_year'),
+                'type': history_detail.get('type'),
+                'authorships': history_detail.get('authorships'),
+                'concepts': history_detail.get('concepts'),
+                'cited_by_count': history_detail.get('cited_by_count'),
             })
         return JsonResponse({
             'success': True,
