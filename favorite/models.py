@@ -1,6 +1,7 @@
 from django.db import models
 
 from user.models import User
+from utils.openalex import get_single_entity
 
 
 # Create your models here.
@@ -27,8 +28,22 @@ class FavoriteItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def info(self):
-        return {
-            'id': self.id,
-            'work': self.work,
-            'title': self.title,
-        }
+        result, success = get_single_entity('work', self.work)
+        if success:
+            return {
+                'id': self.id,
+                'work': self.work,
+                'title': self.title,
+                'display_name': result.get('display_name'),
+                'publication_year': result.get('publication_year'),
+                'type': result.get('type'),
+                'authorships': result.get('authorships'),
+                'concepts': result.get('concepts'),
+                'cited_by_count': result.get('cited_by_count'),
+            }
+        else:
+            return {
+                'id': self.id,
+                'work': self.work,
+                'title': self.title,
+            }
