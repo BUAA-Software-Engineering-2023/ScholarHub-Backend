@@ -5,7 +5,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from history.models import History
-from utils.openalex import get_single_entity, get_histories_details
+from utils.cache import clear_openalex_histories_details_cache
+from utils.openalex import get_histories_details
 from utils.token import auth_check
 
 
@@ -50,6 +51,7 @@ class HistoryView(View):
                 'message': 'history_id不存在'
             })
         history.delete()
+        clear_openalex_histories_details_cache(request.user.id)
         return JsonResponse({
             'success': True,
             'message': '删除成功'
