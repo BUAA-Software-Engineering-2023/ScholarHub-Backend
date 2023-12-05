@@ -3,6 +3,7 @@ import os
 
 from django.http.response import JsonResponse, StreamingHttpResponse
 
+from favorite.models import Favorite
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity, autocomplete
 from utils.token import auth_check
@@ -45,7 +46,7 @@ def work_detail_view(request):
 
     if not result['open_access']['is_oa']:
         try:
-            work = Work.objects.get(id=id, status=WorkStatus.ACCEPTED.value)
+            work = Work.objects.get(id=work_id, status=WorkStatus.ACCEPTED.value)
             result['open_access']['is_oa'] = True
             result['open_access']['oa_url'] = work.url(request)
         except Work.DoesNotExist:
@@ -62,6 +63,8 @@ def work_detail_view(request):
                 'data': result
             })
         history.save()
+        is_like = Favorite.objects.filter(work=work_id, user=request.user).exists()
+        result['is_like'] = is_like
     return JsonResponse({
         'success': True,
         'data': result
