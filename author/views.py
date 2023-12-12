@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.http import JsonResponse
 
@@ -77,6 +78,8 @@ def author_detail_view(request):
 def apply_view(request):
     data = json.loads(request.body)
     author_id = data.get('author_id')
+    reason = data.get('reason', '')
+    phone_number = data.get('phone_number')
     if not author_id:
         return JsonResponse({
             'success': False,
@@ -97,7 +100,18 @@ def apply_view(request):
             'success': False,
             'message': '您已通过审核,请不要重复提交申请'
         })
-    celery_create_application.delay(request.user.id, ApplicationStatus.PENDING.value, author_id)
+    if phone_number is None:
+        return JsonResponse({
+            'success': False,
+            'message': '请给出联系电话'
+        })
+    pattern = re.compile(r'^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$')
+    if not pattern.match(phone_number):
+        return JsonResponse({
+            'success': False,
+            'message': '联系电话格式错误'
+        })
+    celery_create_application.delay(request.user.id, ApplicationStatus.PENDING.value, author_id, reason, phone_number)
     return JsonResponse({
         'success': True,
         'message': '门户认证申请提交成功'
@@ -116,6 +130,8 @@ def list_application_view(request):
         result.append({
             'application_id': application.id,
             'status': ApplicationStatus(application.status).info(),
+            'reason': application.reason,
+            'phone_number': application.phone_number,
             'created_at': application.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         })
     return JsonResponse({

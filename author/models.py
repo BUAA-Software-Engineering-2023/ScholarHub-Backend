@@ -21,6 +21,8 @@ class Application(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     author_id = models.CharField(max_length=100)
     status = models.CharField(max_length=100)
+    reason = models.TextField(null=True)
+    phone_number = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
