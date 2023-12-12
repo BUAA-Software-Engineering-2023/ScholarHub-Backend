@@ -28,7 +28,7 @@ def parse_token(token):
         return None, 403
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
-    except jwt.DecodeError:
+    except (jwt.DecodeError, jwt.ExpiredSignatureError):
         return None, 401
     try:
         user = User.objects.get(username=payload['username'])
