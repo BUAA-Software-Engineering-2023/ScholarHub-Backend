@@ -4,8 +4,9 @@ from message.models import Message
 
 
 @app.task()
-def celery_create_application(user_id, status, author_id):
-    application = Application(status=status, user_id=user_id, author_id=author_id)
+def celery_create_application(user_id, status, author_id, reason, phone_number):
+    application = Application(status=status, user_id=user_id, author_id=author_id, reason=reason,
+                              phone_number=phone_number)
     application.save()
 
 

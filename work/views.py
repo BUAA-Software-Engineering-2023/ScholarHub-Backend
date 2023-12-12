@@ -3,7 +3,7 @@ import os
 
 from django.http.response import JsonResponse, StreamingHttpResponse
 
-from favorite.models import Favorite
+from favorite.models import Favorite, FavoriteItem
 from utils.decorator import request_methods
 from utils.openalex import search_entities_by_body, get_single_entity, autocomplete
 from utils.token import auth_check
@@ -63,8 +63,12 @@ def work_detail_view(request):
                 'data': result
             })
         history.save()
-        is_like = Favorite.objects.filter(work=work_id, user=request.user).exists()
-        result['is_like'] = is_like
+        for item in FavoriteItem.objects.filter(work=work_id):
+            if item.favorite.user == request.user:
+                result['is_like'] = True
+                break
+        if not result.get('is_like'):
+            result['is_like'] = False
     return JsonResponse({
         'success': True,
         'data': result
