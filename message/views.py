@@ -22,6 +22,7 @@ class MessageView(View):
             'receiver_username': message.receiver.username,
             'content': message.content,
             'is_read': message.is_read,
+            'created_at': message.created_at.strftime('%Y-%m-%d'),
         } for message in messages]
         return JsonResponse({
             'success': True,
