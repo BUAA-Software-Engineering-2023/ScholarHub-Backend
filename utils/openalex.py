@@ -327,14 +327,14 @@ def get_recommendations(history: list):
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
         ], 'sort': {'cited_by_count': 'desc'}})[list(total)]
-        result = related_works[:10]
+        result = list(set(related_works))[:10]
 
         # 获取最新的10篇
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
         ], 'sort': {'publication_date': 'desc'}})[list(total)]
-        result += related_works[:10]
+        result += list(set(related_works))[:10]
 
         # 随机选取10篇
         result = random.choices(result, k=10)
