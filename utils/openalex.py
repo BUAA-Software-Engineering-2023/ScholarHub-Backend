@@ -337,8 +337,8 @@ def get_recommendations(history: list):
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
-        ], 'sort': {'publication_date': 'desc'},
-            'filter': {'openalex': ids}})[total]
+        ], 'sort': {'publication_date': 'desc'}
+        }).filter(openalex=ids)[total]
 
         result += related_works[:10]
 
