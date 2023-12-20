@@ -345,7 +345,7 @@ def get_recommendations(history: list):
         result += related_works[:10]
 
         # 随机选取10篇
-        result = random.choices(result, k=10)
+        result = random.sample(result, k=10)
         # 加入缓存
         set_openalex_recommendations_cache(result, history)
     return result
