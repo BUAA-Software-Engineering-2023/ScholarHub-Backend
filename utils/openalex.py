@@ -329,16 +329,18 @@ def get_recommendations(history: list):
         ], 'sort': {'cited_by_count': 'desc'}})[total]
         result = related_works[:10]
 
-        ids = []
+        ids = set()
         for r in result:
-            ids.append('!' + r['id'])
+            ids.add(r['id'])
+
+        total = list(set(total) - ids)
 
         # 获取最新的10篇
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
         ], 'sort': {'publication_date': 'desc'}
-        }).filter(openalex=ids)[total]
+        })[total]
 
         result += related_works[:10]
 
