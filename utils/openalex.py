@@ -333,7 +333,7 @@ def get_recommendations(history: list):
         for r in result:
             ids.add(r['id'])
 
-        total = list(set(total) - set(ids))
+        total = list(set(total) - ids)
 
         # 获取最新的10篇
         related_works = Works({'select': [
