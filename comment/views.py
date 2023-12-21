@@ -21,39 +21,24 @@ def list_comment_view(request):
             'success': False,
             'message': '请提供学术成果信息'
         })
-    comments = get_comment_cache(work_id)
+    comments = get_comment_cache(work_id, reverse if reverse is not None else True)
     if not comments:
         if reverse or reverse is None:
             comments = Comment.objects.filter(work=work_id).order_by('-is_top', '-created_at')
         else:
             comments = Comment.objects.filter(work=work_id).order_by('-is_top', 'created_at')
-        temp = {}
-        for comment in comments:
-            if not comment.reply:
-                continue
-            if comment.reply.id not in temp:
-                temp[comment.reply.id] = []
-            temp[comment.reply.id].append(comment)
-
-        def build_comment_tree(comment):
-            return {
-                'comment_id': comment.id,
-                'work_id': comment.work,
-                'sender_id': comment.sender.id,
-                'sender_nickname': comment.sender.nickname,
-                'content': comment.content,
-                'is_top': comment.is_top,
-                'replies': [build_comment_tree(reply) for reply in temp.get(comment.id, [])],
-                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            }
-
-        temp2 = []
-        for comment in comments:
-            if not comment.reply:
-                temp2.append(build_comment_tree(comment))
-        comments = temp2
-        set_comment_cache(work_id, comments)
+        comments = [{
+            'comment_id': comment.id,
+            'work_id': comment.work,
+            'sender_id': comment.sender.id,
+            'sender_nickname': comment.sender.nickname,
+            'sender_avatar': comment.sender.avatar if comment.sender.avatar else None,
+            'content': comment.content,
+            'reply_id': comment.reply.id if comment.reply else None,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+        } for comment in comments]
+        set_comment_cache(work_id, reverse if reverse is not None else False, comments)
     return JsonResponse({
         'success': True,
         'data': comments
