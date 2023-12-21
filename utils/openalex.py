@@ -320,24 +320,32 @@ def get_recommendations(history: list):
         for related_work in related_works:
             total.update(related_work['related_works'])
         # 排除浏览过的论文
-        total = total - set(origin)
+        total = list(total - set(origin))[:30]
 
         # 获取引用量最高的10篇
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
-        ], 'sort': {'cited_by_count': 'desc'}})[list(total)]
-        result = list(set(related_works))[:10]
+        ], 'sort': {'cited_by_count': 'desc'}})[total]
+        result = related_works[:10]
+
+        ids = set()
+        for r in result:
+            ids.add(r['id'])
+
+        total = list(set(total) - ids)
 
         # 获取最新的10篇
         related_works = Works({'select': [
             'id', 'display_name', 'publication_year',
             'authorships', 'concepts', 'cited_by_count'
-        ], 'sort': {'publication_date': 'desc'}})[list(total)]
-        result += list(set(related_works))[:10]
+        ], 'sort': {'publication_date': 'desc'}
+        })[total]
+
+        result += related_works[:10]
 
         # 随机选取10篇
-        result = random.choices(result, k=10)
+        result = random.sample(result, k=10)
         # 加入缓存
         set_openalex_recommendations_cache(result, history)
     return result
