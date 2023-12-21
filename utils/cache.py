@@ -115,13 +115,13 @@ def clear_openalex_histories_details_cache(user_id):
     return cache.delete(key)
 
 
-def get_comment_cache(work_id):
-    key = f'comment_{work_id}'
+def get_comment_cache(work_id, reverse):
+    key = f'comment_{work_id}_{reverse}'
     return cache.get(key)
 
 
-def set_comment_cache(work_id, result):
-    key = f'comment_{work_id}'
+def set_comment_cache(work_id, reverse, result):
+    key = f'comment_{work_id}_{reverse}'
     return cache.set(key, result)
 
 
