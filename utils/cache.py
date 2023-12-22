@@ -126,8 +126,11 @@ def set_comment_cache(work_id, reverse, result):
 
 
 def clear_comment_cache(work_id):
-    key = f'comment_{work_id}'
-    return cache.delete(key)
+    key1 = f'comment_{work_id}_True'
+    key2 = f'comment_{work_id}_False'
+    success1 = cache.delete(key1)
+    success2 = cache.delete(key2)
+    return success1 and success2
 
 
 def get_questions_cache(work_id):
