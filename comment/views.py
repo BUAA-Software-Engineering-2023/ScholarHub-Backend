@@ -27,17 +27,7 @@ def list_comment_view(request):
             comments = Comment.objects.filter(work=work_id).order_by('-is_top', '-created_at')
         else:
             comments = Comment.objects.filter(work=work_id).order_by('-is_top', 'created_at')
-        comments = [{
-            'comment_id': comment.id,
-            'work_id': comment.work,
-            'sender_id': comment.sender.id,
-            'sender_nickname': comment.sender.nickname,
-            'sender_avatar': comment.sender.avatar if comment.sender.avatar else None,
-            'content': comment.content,
-            'reply_id': comment.reply.id if comment.reply else None,
-            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-        } for comment in comments]
+        comments = [comment.info() for comment in comments]
         set_comment_cache(work_id, reverse if reverse is not None else False, comments)
     return JsonResponse({
         'success': True,
@@ -160,17 +150,7 @@ def modify_comment_view(request):
     return JsonResponse({
         'success': True,
         'message': '修改评论成功',
-        'data': {
-            'comment_id': comment.id,
-            'work_id': comment.work,
-            'sender_id': comment.sender.id,
-            'sender_nickname': comment.sender.nickname,
-            'content': comment.content,
-            'reply_id': comment.reply.id if comment.reply else None,
-            'reply_nickname': comment.reply.sender.nickname if comment.reply else None,
-            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': comment.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-        }
+        'data': comment.info()
     })
 
 
