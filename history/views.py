@@ -17,6 +17,11 @@ class HistoryView(View):
     def get(self, request):
         user = request.user
         history = user.history_set.all().order_by('-updated_at')
+        if not history:
+            return JsonResponse({
+                'success': True,
+                'data': []
+            })
         result = []
         works = [h.work for h in history]
         histories_details = get_histories_details(works, user.id)

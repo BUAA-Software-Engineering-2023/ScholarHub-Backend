@@ -245,14 +245,16 @@ def get_single_entity(type: str, id: str):
             result['abstract'] = result['abstract']
             del result['abstract_inverted_index']
 
-            result['referenced_works'] = Works(
-                {'select': ['id', 'display_name', 'publication_year',
-                            'authorships', 'type']}
-            )[result['referenced_works'][0:20]]
-            result['related_works'] = Works(
-                {'select': ['id', 'display_name', 'publication_year',
-                            'authorships', 'type']}
-            )[result['related_works'][0:20]]
+            if not result['referenced_works']:
+                result['referenced_works'] = Works(
+                    {'select': ['id', 'display_name', 'publication_year',
+                                'authorships', 'type']}
+                )[result['referenced_works'][0:20]]
+            if not result['related_works']:
+                result['related_works'] = Works(
+                    {'select': ['id', 'display_name', 'publication_year',
+                                'authorships', 'type']}
+                )[result['related_works'][0:20]]
 
         if type == 'author':
             result['works'] = search_works_by_author_id(id)
@@ -321,6 +323,8 @@ def get_recommendations(history: list):
             total.update(related_work['related_works'])
         # 排除浏览过的论文
         total = list(total - set(origin))[:30]
+        if not total:
+            return None
 
         # 获取引用量最高的10篇
         related_works = Works({'select': [
@@ -334,6 +338,8 @@ def get_recommendations(history: list):
             ids.add(r['id'])
 
         total = list(set(total) - ids)
+        if not total:
+            return result
 
         # 获取最新的10篇
         related_works = Works({'select': [
