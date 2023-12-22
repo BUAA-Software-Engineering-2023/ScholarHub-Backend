@@ -245,12 +245,12 @@ def get_single_entity(type: str, id: str):
             result['abstract'] = result['abstract']
             del result['abstract_inverted_index']
 
-            if not result['referenced_works']:
+            if result['referenced_works']:
                 result['referenced_works'] = Works(
                     {'select': ['id', 'display_name', 'publication_year',
                                 'authorships', 'type']}
                 )[result['referenced_works'][0:20]]
-            if not result['related_works']:
+            if result['related_works']:
                 result['related_works'] = Works(
                     {'select': ['id', 'display_name', 'publication_year',
                                 'authorships', 'type']}
