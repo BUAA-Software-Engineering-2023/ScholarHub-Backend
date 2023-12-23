@@ -234,7 +234,7 @@ def list_work_view(request):
             'id': work.id,
             'title': work.title,
             'name': work.name,
-            'url': work.url(request),
+            'url': work.admin_url(request),
             'status': WorkStatus(work.status).info(),
             'author': work.author.id
         })
@@ -247,7 +247,7 @@ def list_work_view(request):
 @request_methods(['GET'])
 def download_work_view(request):
     id = request.GET.get('id')
-    print(id)
+    hash = request.GET.get('hash')
     if not id:
         return JsonResponse({
             'success': False,
@@ -266,7 +266,7 @@ def download_work_view(request):
             'success': False,
             'message': '不存在可供下载的论文'
         }, status=404)
-    if work.status == WorkStatus.PENDING.value and (not request.user or not request.user.is_admin):
+    if work.status == WorkStatus.PENDING.value and hash != work.path.split(".")[0]:
         return JsonResponse({
             'success': False,
             'message': '论文审核中，暂不支持下载'
