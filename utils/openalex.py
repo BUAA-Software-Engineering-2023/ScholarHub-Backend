@@ -71,6 +71,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
         temp = filter.copy()
         # 特殊处理filter中的作者名authorships.author.display_name
         if 'authorships.author.display_name' in filter:
+            filter['authorships.author.display_name'] = filter['authorships.author.display_name'].split('|')
             ids, success = get_entities_ids('author', filter['authorships.author.display_name'])
             if not success:
                 return ids, success
@@ -78,6 +79,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             del filter['authorships.author.display_name']
         # 特殊处理filter中的机构名authorships.institutions.display_name
         if 'authorships.institutions.display_name' in filter:
+            filter['authorships.institutions.display_name'] = filter['authorships.institutions.display_name'].split('|')
             ids, success = get_entities_ids('institution', filter['authorships.institutions.display_name'])
             if not success:
                 return ids, success
@@ -85,6 +87,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             del filter['authorships.institutions.display_name']
         # 特殊处理filter中的主题名concepts.display_name
         if 'concepts.display_name' in filter:
+            filter['concepts.display_name'] = filter['concepts.display_name'].split('|')
             ids, success = get_entities_ids('concept', filter['concepts.display_name'])
             if not success:
                 return ids, success
@@ -92,6 +95,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             del filter['concepts.display_name']
         # 特殊处理filter中的机构名last_known_institution.display_name
         if 'last_known_institution.display_name' in filter:
+            filter['last_known_institution.display_name'] = filter['last_known_institution.display_name'].split('|')
             ids, success = get_entities_ids('institution', filter['last_known_institution.display_name'])
             if not success:
                 return ids, success
@@ -99,6 +103,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             del filter['last_known_institution.display_name']
         # 特殊处理filter中的主题名x_concepts.display_name
         if 'x_concepts.display_name' in filter:
+            filter['x_concepts.display_name'] = filter['x_concepts.display_name'].split('|')
             ids, success = get_entities_ids('concept', filter['x_concepts.display_name'])
             if not success:
                 return ids, success
@@ -106,6 +111,7 @@ def search_entities(type: str, search: str, position: str = 'default', filter: d
             del filter['x_concepts.display_name']
         # 特殊处理filter中的主题名ancestors.display_name
         if 'ancestors.display_name' in filter:
+            filter['ancestors.display_name'] = filter['ancestors.display_name'].split('|')
             ids, success = get_entities_ids('concept', filter['ancestors.display_name'])
             if not success:
                 return ids, success
@@ -245,16 +251,14 @@ def get_single_entity(type: str, id: str):
             result['abstract'] = result['abstract']
             del result['abstract_inverted_index']
 
-            if result['referenced_works']:
-                result['referenced_works'] = Works(
-                    {'select': ['id', 'display_name', 'publication_year',
-                                'authorships', 'type']}
-                )[result['referenced_works'][0:20]]
-            if result['related_works']:
-                result['related_works'] = Works(
-                    {'select': ['id', 'display_name', 'publication_year',
-                                'authorships', 'type']}
-                )[result['related_works'][0:20]]
+            result['referenced_works'] = Works(
+                {'select': ['id', 'display_name', 'publication_year',
+                            'authorships', 'type']}
+            )[result['referenced_works'][0:20]]
+            result['related_works'] = Works(
+                {'select': ['id', 'display_name', 'publication_year',
+                            'authorships', 'type']}
+            )[result['related_works'][0:20]]
 
         if type == 'author':
             result['works'] = search_works_by_author_id(id)
@@ -323,8 +327,6 @@ def get_recommendations(history: list):
             total.update(related_work['related_works'])
         # 排除浏览过的论文
         total = list(total - set(origin))[:30]
-        if not total:
-            return None
 
         # 获取引用量最高的10篇
         related_works = Works({'select': [
@@ -338,8 +340,6 @@ def get_recommendations(history: list):
             ids.add(r['id'])
 
         total = list(set(total) - ids)
-        if not total:
-            return result
 
         # 获取最新的10篇
         related_works = Works({'select': [
@@ -369,24 +369,4 @@ def autocomplete(type: str, search: str):
             return []
         result = result.json()['results']
         set_openalex_autocomplete_cache(result, type, search)
-    return result
-
-
-def get_author_name(id: str):
-    result = get_openalex_author_name_cache(id)
-    if not result:
-        try:
-            result = entities['author']()[id]
-        except QueryError as e:
-            return e.args[0], False
-        except HTTPError as e:
-            if e.response.status_code == 404:
-                return '不存在对应id的实体', False
-            print(e.args)
-            return 'OpenAlex请求出错', False
-        except Exception as e:
-            print(e.args)
-            return '未知错误', False
-        result = result['display_name']
-        set_openalex_author_name_cache(result, id)
     return result
