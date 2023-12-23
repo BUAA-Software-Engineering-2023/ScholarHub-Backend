@@ -5,7 +5,7 @@ from django.http import JsonResponse
 
 from author.task import *
 from utils.decorator import request_methods
-from utils.openalex import search_entities_by_body, get_single_entity, autocomplete, search_works_by_author_id
+from utils.openalex import *
 from utils.token import auth_check
 from utils.upload import upload_file
 
@@ -129,6 +129,11 @@ def list_application_view(request):
     for application in applications:
         result.append({
             'application_id': application.id,
+            'user_id': application.user.id,
+            'user_nickname': application.user.nickname,
+            'user_email': application.user.email,
+            'author_id': application.author_id,
+            'author_name': get_author_name(application.author_id),
             'status': ApplicationStatus(application.status).info(),
             'reason': application.reason,
             'phone_number': application.phone_number,

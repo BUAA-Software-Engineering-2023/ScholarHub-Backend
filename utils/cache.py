@@ -113,3 +113,18 @@ def set_openalex_histories_details_cache(value, user_id):
 def clear_openalex_histories_details_cache(user_id):
     key = f'openalex_histories_details_{user_id}'
     return cache.delete(key)
+
+
+def get_openalex_author_name_cache(author_id):
+    key = f'openalex_author_name_{author_id}'
+    return cache.get(key)
+
+
+def set_openalex_author_name_cache(value, author_id):
+    key = f'openalex_author_name_{author_id}'
+    return cache.set(key, value)
+
+
+def clear_openalex_author_name_cache(author_id):
+    key = f'openalex_author_name_{author_id}'
+    return cache.delete(key)
