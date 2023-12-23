@@ -20,6 +20,9 @@ class Work(models.Model):
     def url(self, request):
         return request.build_absolute_uri(f'/api/v1/work/download?id={self.id}')
 
+    def admin_url(self, request):
+        return request.build_absolute_uri(f'/api/v1/work/download?id={self.id}&hash={self.path.split(".")[0]}')
+
 
 class WorkStatus(Enum):
     PENDING = '1'
