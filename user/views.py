@@ -151,6 +151,7 @@ def login_view(request):
             'id': user.id,
             'username': user.username,
             'nickname': user.nickname,
+            'avatar': user.avatar,
             'email': user.email,
             'is_admin': user.is_admin,
             'is_author': author is not None,

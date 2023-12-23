@@ -3,7 +3,6 @@ import json
 from django.http import JsonResponse
 
 from comment.task import *
-from utils.cache import get_comment_cache, set_comment_cache, clear_comment_cache
 from utils.decorator import request_methods
 from utils.token import auth_check
 from utils.upload import upload_file
@@ -21,14 +20,11 @@ def list_comment_view(request):
             'success': False,
             'message': '请提供学术成果信息'
         })
-    comments = get_comment_cache(work_id, reverse if reverse is not None else True)
-    if not comments:
-        if reverse or reverse is None:
-            comments = Comment.objects.filter(work=work_id).order_by('-is_top', '-created_at')
-        else:
-            comments = Comment.objects.filter(work=work_id).order_by('-is_top', 'created_at')
-        comments = [comment.info() for comment in comments]
-        set_comment_cache(work_id, reverse if reverse is not None else False, comments)
+    if reverse or reverse is None:
+        comments = Comment.objects.filter(work=work_id).order_by('-is_top', '-created_at')
+    else:
+        comments = Comment.objects.filter(work=work_id).order_by('-is_top', 'created_at')
+    comments = [comment.info() for comment in comments]
     return JsonResponse({
         'success': True,
         'data': comments
@@ -61,7 +57,6 @@ def create_comment_view(request):
                 'message': '回复评论不存在'
             })
         celery_create_comment.delay(work_id, request.user.id, content, reply_id)
-        clear_comment_cache(work_id)
         celery_create_message.delay(reply.sender.id, f'您的评论有了来自{request.user.nickname}的新回复')
         return JsonResponse({
             'success': True,
@@ -69,7 +64,6 @@ def create_comment_view(request):
         })
     else:
         celery_create_comment.delay(work_id, request.user.id, content)
-        clear_comment_cache(work_id)
         return JsonResponse({
             'success': True,
             'message': '评论成功',
@@ -96,7 +90,6 @@ def delete_comment_view(request):
         })
     if user.is_admin or comment.sender == request.user:
         comment.delete()
-        clear_comment_cache(comment.work)
         return JsonResponse({
             'success': True,
             'message': '删除评论成功'
@@ -108,7 +101,6 @@ def delete_comment_view(request):
                 'message': '无权限删除评论'
             })
         comment.delete()
-        clear_comment_cache(comment.work)
         return JsonResponse({
             'success': True,
             'message': '删除评论成功'
@@ -146,7 +138,6 @@ def modify_comment_view(request):
         })
     comment.content = content
     comment.save()
-    clear_comment_cache(comment.work)
     return JsonResponse({
         'success': True,
         'message': '修改评论成功',
@@ -195,7 +186,6 @@ def top_comment_view(request):
     if user.is_admin:
         comment.is_top = True
         comment.save()
-        clear_comment_cache(comment.work)
         return JsonResponse({
             'success': True,
             'message': '置顶评论成功'
@@ -228,7 +218,6 @@ def untop_comment_view(request):
     if user.is_admin:
         comment.is_top = False
         comment.save()
-        clear_comment_cache(comment.work)
         return JsonResponse({
             'success': True,
             'message': '取消置顶评论成功'
