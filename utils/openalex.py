@@ -370,3 +370,23 @@ def autocomplete(type: str, search: str):
         result = result.json()['results']
         set_openalex_autocomplete_cache(result, type, search)
     return result
+
+
+def get_author_name(id: str):
+    result = get_openalex_author_name_cache(id)
+    if not result:
+        try:
+            result = entities['author']()[id]
+        except QueryError as e:
+            return e.args[0], False
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return '不存在对应id的实体', False
+            print(e.args)
+            return 'OpenAlex请求出错', False
+        except Exception as e:
+            print(e.args)
+            return '未知错误', False
+        result = result['display_name']
+        set_openalex_author_name_cache(result, id)
+    return result
