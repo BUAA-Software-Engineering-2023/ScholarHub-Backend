@@ -151,7 +151,7 @@ def login_view(request):
             'id': user.id,
             'username': user.username,
             'nickname': user.nickname,
-            'avatar': user.avatar,
+            'avatar': user.avatar if user.avatar else "https://img.zcool.cn/community/0177b355ed01bc6ac7251df8f6be5a.png",
             'email': user.email,
             'is_admin': user.is_admin,
             'is_author': author is not None,
@@ -174,7 +174,7 @@ def get_userinfo_view(request):
             'id': user.id,
             'username': user.username,
             'nickname': user.nickname,
-            'avatar': user.avatar,
+            'avatar': user.avatar if user.avatar else "https://img.zcool.cn/community/0177b355ed01bc6ac7251df8f6be5a.png",
             'email': user.email,
             'is_admin': user.is_admin,
             'is_author': author is not None,
@@ -189,7 +189,7 @@ def update_userinfo_view(request):
     user = request.user
     data = json.loads(request.body)
     nickname = data.get('nickname', user.nickname)
-    avatar = data.get('avatar', user.avatar)
+    avatar = data.get('avatar', "https://img.zcool.cn/community/0177b355ed01bc6ac7251df8f6be5a.png")
     user.nickname = nickname
     user.avatar = avatar
     user.save()

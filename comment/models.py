@@ -20,7 +20,7 @@ class Comment(models.Model):
             'work_id': self.work,
             'sender_id': self.sender.id,
             'sender_nickname': self.sender.nickname,
-            'sender_avatar': self.sender.avatar if self.sender.avatar else None,
+            'sender_avatar': self.sender.avatar if self.sender.avatar else "https://img.zcool.cn/community/0177b355ed01bc6ac7251df8f6be5a.png",
             'content': self.content,
             'reply_id': self.reply.id if self.reply else None,
             'comments': [comment.info() for comment in self.comment_set.all()],
