@@ -165,7 +165,8 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://:{os.environ.get('REDIS_PASSWORD', '')}"
                     f"@{os.environ.get('REDIS_HOST', '127.0.0.1')}"
-                    f":{os.environ.get('REDIS_PORT', '6379')}/0"
+                    f":{os.environ.get('REDIS_PORT', '6379')}/0",
+        "TIMEOUT": os.environ.get('REDIS_TIMEOUT', 300)
     }
 }
 
