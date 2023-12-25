@@ -32,12 +32,12 @@ class HistoryView(View):
                 'title': h.title,
                 'work': h.work,
                 'updated_at': h.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'display_name': history_detail.get('display_name'),
-                'publication_year': history_detail.get('publication_year'),
-                'type': history_detail.get('type'),
-                'authorships': history_detail.get('authorships'),
-                'concepts': history_detail.get('concepts'),
-                'cited_by_count': history_detail.get('cited_by_count'),
+                'display_name': history_detail.get('display_name', ''),
+                'publication_year': history_detail.get('publication_year', ''),
+                'type': history_detail.get('type', ''),
+                'authorships': history_detail.get('authorships', []),
+                'concepts': history_detail.get('concepts', []),
+                'cited_by_count': history_detail.get('cited_by_count', 0),
             })
         return JsonResponse({
             'success': True,
