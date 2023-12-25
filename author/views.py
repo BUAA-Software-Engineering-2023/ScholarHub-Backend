@@ -65,7 +65,7 @@ def author_detail_view(request):
     author = Author.objects.filter(id=author_id).first()
     if author:
         result['profile'] = author.profile
-        result['avatar'] = author.avatar
+        result['avatar'] = author.avatar if author.avatar else "https://p4.itc.cn/q_70/images03/20230419/afa26485b395428abdc42e66a44d2e32.jpeg"
         result['display_name'] = author.name
     return JsonResponse({
         'success': True,
@@ -213,7 +213,7 @@ def edit_author_view(request):
         }, status=403)
     author.name = data.get('name', author.name)
     author.profile = data.get('profile', author.profile)
-    author.avatar = data.get('avatar', author.avatar)
+    author.avatar = data.get('avatar', "https://p4.itc.cn/q_70/images03/20230419/afa26485b395428abdc42e66a44d2e32.jpeg")
     author.save()
     return JsonResponse({
         'success': True,
@@ -221,7 +221,7 @@ def edit_author_view(request):
             'author_id': author.id,
             'name': author.name,
             'profile': author.profile,
-            'avatar': author.avatar
+            'avatar': author.avatar if author.avatar else "https://p4.itc.cn/q_70/images03/20230419/afa26485b395428abdc42e66a44d2e32.jpeg"
         }
     })
 

@@ -29,7 +29,7 @@ entities_fields = {
     'source': ['id', 'display_name', 'country_code', 'type'],
     'institution': ['id', 'display_name', 'country_code', 'type',
                     'image_url', 'international', 'x_concepts'],
-    'concept': ['id', 'display_name', 'international'],
+    'concept': ['id', 'display_name', 'international', 'image_url'],
     'publisher': ['id', 'display_name', 'alternate_titles',
                   'country_codes', 'image_url'],
     'funder': ['id', 'display_name', 'alternate_titles',
