@@ -16,9 +16,9 @@ def upload_file(request, file_type):
         file.seek(0)
         with open(f'./media/{file_name}', 'wb') as f:
             f.write(file.read())
-        return request.build_absolute_uri(f'/media/{file_name}')
+        return f'https://scholarhub.bienboy.store/media/{file_name}'
     else:
-        return request.build_absolute_uri(f'/media/{file_name}')
+        return f'https://scholarhub.bienboy.store/media/{file_name}'
 
 
 def upload_work(request):
