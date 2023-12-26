@@ -18,10 +18,10 @@ class Work(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def url(self, request):
-        return request.build_absolute_uri(f'/api/v1/work/download?id={self.id}')
+        return f'https://scholarhub.bienboy.store/api/v1/work/download?id={self.id}'
 
     def admin_url(self, request):
-        return request.build_absolute_uri(f'/api/v1/work/download?id={self.id}&hash={self.path.split(".")[0]}')
+        return f'https://scholarhub.bienboy.store/api/v1/work/download?id={self.id}&hash={self.path.split(".")[0]}'
 
 
 class WorkStatus(Enum):
