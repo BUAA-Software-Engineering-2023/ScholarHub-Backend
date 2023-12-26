@@ -35,10 +35,9 @@ def send_verification_code_view(request):
 
     celery_send_verification_code.delay(email, code)
 
-    # TODO 最终需移除返回的验证码
     return JsonResponse({
         'success': True,
-        'code': code
+        'message': '发送成功'
     })
 
 
