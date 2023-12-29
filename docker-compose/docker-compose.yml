@@ -1,0 +1,89 @@
+version: '3'
+services:
+  nginx:
+    build: ${CONF_DIR:-./conf}/nginx
+    ports:
+      - "8000:80"
+    volumes:
+       - ${DATA_DIR:-./data}/django/media:/usr/django/media
+    links:
+      - django
+    depends_on:
+      - django
+    restart: always
+
+  django:
+    image: buaa2121/scholarhub-backend
+    expose:
+      - 8000
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DB_HOST=mysql
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    volumes:
+       - ${CONF_DIR:-./conf}/django/uwsgi.ini:/django/ScholarHub/uwsgi.ini
+       - ${DATA_DIR:-./data}/django/media:/django/ScholarHub/media
+       - ${DATA_DIR:-./data}/django/files:/django/ScholarHub/files
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - mysql
+      - redis
+      - celery
+    restart: always
+
+  celery:
+    image: buaa2121/scholarhub-backend
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DB_HOST=mysql
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    command: ["celery", "-A", "ScholarHub", "worker", "-l", "INFO"]
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=scholarhub
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    command: --character-set-server=utf8mb4 --port=3306 --skip-name-resolve
+    volumes:
+       - ${DATA_DIR:-./data}/mysql:/var/lib/mysql
+    expose:
+      - 3306
+    restart: always
+
+  redis:
+    image: redis
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ${DATA_DIR:-./data}/redis:/data
+      - ${CONF_DIR:-./conf}/redis.conf:/etc/redis/redis.conf
+    expose:
+      - 6379
+    restart: always
